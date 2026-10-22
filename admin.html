@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Undangan Digital</title>
+    
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-50 font-sans text-gray-800">
+
+    <!-- Navbar Minimalis -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">MS<span class="text-indigo-600">Undangan</span></h1>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-gray-600">Admin Panel</span>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=4f46e5&color=fff" alt="Admin" class="w-8 h-8 rounded-full">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Area -->
+    <main class="container mx-auto px-6 py-8 max-w-6xl">
+        
+        <!-- Header & Action Button (Capsule style) -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900">Dashboard Proyek</h2>
+                <p class="text-sm text-gray-500 mt-1">Kelola klien dan status undangan digital Anda.</p>
+            </div>
+            <button id="btn-tambah-proyek" class="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-semibold hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2 text-sm tracking-wide">
+                + Proyek Baru
+            </button>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Klien -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-transform hover:-translate-y-1">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium mb-1">Total Klien</p>
+                    <h3 class="text-3xl font-bold text-gray-900" id="metric-total">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+            </div>
+            
+            <!-- Undangan Aktif -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-transform hover:-translate-y-1">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium mb-1">Undangan Aktif</p>
+                    <h3 class="text-3xl font-bold text-emerald-600" id="metric-aktif">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            
+            <!-- Undangan Draf -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-transform hover:-translate-y-1">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium mb-1">Draf / Pending</p>
+                    <h3 class="text-3xl font-bold text-amber-500" id="metric-draf">0</h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Data Klien (Premium Card Layout) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-white">
+                <h3 class="font-bold text-gray-800 text-lg">Daftar Proyek Klien</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                            <th class="p-4 pl-6">ID Proyek</th>
+                            <th class="p-4">Nama Mempelai</th>
+                            <th class="p-4">Tanggal Acara</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 pr-6 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-klien" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <!-- Data akan di-render oleh admin.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Overlay (Glassmorphism & Hidden by default) -->
+    <div id="modal-tambah" class="fixed inset-0 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <!-- Backdrop Blur -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" id="modal-backdrop"></div>
+        
+        <!-- Modal Card -->
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 p-8 transform scale-95 transition-transform duration-300" id="modal-card">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-serif text-gray-900">Proyek Baru</h3>
+                <button id="btn-tutup-modal" class="text-gray-400 hover:text-gray-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <form id="form-tambah-proyek" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 pl-2">Nama Mempelai</label>
+                    <input type="text" id="input-mempelai" required placeholder="Cth: Romeo & Juliet" 
+                           class="w-full px-6 py-3 rounded-full bg-slate-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 pl-2">Tanggal Acara</label>
+                    <input type="text" id="input-tanggal" required placeholder="Cth: 14 Feb 2027" 
+                           class="w-full px-6 py-3 rounded-full bg-slate-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                </div>
+                <button type="submit" id="btn-simpan-proyek" class="w-full mt-4 rounded-full bg-gray-900 text-white px-8 py-3.5 font-semibold hover:bg-gray-800 transition-colors shadow-lg flex items-center justify-center gap-2">
+                    Simpan & Buat Undangan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Panggil script khusus admin -->
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
