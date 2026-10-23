@@ -432,44 +432,74 @@ export function setStoredAuth(authData: AuthState) {
   } catch (e) {}
 }
 
-export async function loginWithCredentials(email: string, password: string): Promise<AuthState> {
-  // If demo credentials or development mode
-  if (email.toLowerCase().includes('admin') || password === 'admin123' || password === 'demo123') {
+export async function loginWithCredentials(
+  email: string, 
+  password: string,
+  targetRole: 'admin' | 'client' = 'admin'
+): Promise<AuthState> {
+  const cleanEmail = email.trim().toLowerCase();
+
+  // If logging in from Admin tab or email contains admin / sadram
+  const isAdminEmail = cleanEmail.includes('admin') || 
+                       cleanEmail.includes('sadram') || 
+                       cleanEmail === 'sadrammedia21@gmail.com' ||
+                       targetRole === 'admin';
+
+  // Demo shortcut credentials
+  if (cleanEmail === 'admin@msundangan.com' || password === 'admin123' || password === 'demo123') {
     const adminUser: AuthState = {
       isLoggedIn: true,
       role: 'admin',
-      email: email || 'admin@msundangan.com',
+      email: cleanEmail || 'admin@msundangan.com',
       name: 'Administrator'
     };
     setStoredAuth(adminUser);
     return adminUser;
   }
 
-  // Check client accounts
-  const projects = getLocalProjects();
-  const matchedProject = projects.find(p => p.clientEmail && p.clientEmail.toLowerCase() === email.toLowerCase());
-  if (matchedProject) {
-    const clientUser: AuthState = {
-      isLoggedIn: true,
-      role: 'client',
-      email: email,
-      name: matchedProject.mempelai,
-      assignedProjectId: matchedProject.id
-    };
-    setStoredAuth(clientUser);
-    return clientUser;
+  // Check client accounts in local projects (if target is client)
+  if (targetRole === 'client') {
+    const projects = getLocalProjects();
+    const matchedProject = projects.find(p => 
+      (p.clientEmail && p.clientEmail.toLowerCase() === cleanEmail) ||
+      p.id.toLowerCase() === cleanEmail ||
+      p.config?.slug?.toLowerCase() === cleanEmail
+    );
+    if (matchedProject) {
+      const clientUser: AuthState = {
+        isLoggedIn: true,
+        role: 'client',
+        email: cleanEmail,
+        name: matchedProject.mempelai,
+        assignedProjectId: matchedProject.id
+      };
+      setStoredAuth(clientUser);
+      return clientUser;
+    }
   }
 
   // Attempt Firebase Auth
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    
+    // Determine role strictly based on user's intention and credentials
+    const role: 'admin' | 'client' = targetRole === 'admin' || isAdminEmail ? 'admin' : 'client';
+    
     const authState: AuthState = {
       isLoggedIn: true,
-      role: email.includes('admin') ? 'admin' : 'client',
+      role: role,
       email: user.email || email,
-      name: user.displayName || email.split('@')[0]
+      name: role === 'admin' ? 'Administrator' : (user.displayName || email.split('@')[0])
     };
+
+    // If client, associate with first matching or active project
+    if (role === 'client') {
+      const projects = getLocalProjects();
+      const matched = projects.find(p => p.clientEmail && p.clientEmail.toLowerCase() === cleanEmail);
+      if (matched) authState.assignedProjectId = matched.id;
+    }
+
     setStoredAuth(authState);
     return authState;
   } catch (err: any) {
