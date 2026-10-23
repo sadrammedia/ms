@@ -22,8 +22,8 @@ import {
   onAuthStateChanged,
   User 
 } from 'firebase/auth';
-import { WeddingProject, WeddingConfig, GuestbookEntry } from '../types/wedding';
-import { defaultProjectsList, defaultWeddingConfig } from '../data/defaultInvitations';
+import { WeddingProject, WeddingConfig, GuestbookEntry, InvitationCategory } from '../types/wedding';
+import { defaultProjectsList, defaultWeddingConfig, defaultKhitanConfig, defaultBirthdayConfig } from '../data/defaultInvitations';
 
 // Firebase configuration from existing project
 const firebaseConfig = {
@@ -51,7 +51,35 @@ export function getLocalProjects(): WeddingProject[] {
     const raw = localStorage.getItem(STORAGE_PROJECTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure default properties like modeNavigasi and multi-category templates are present
+        const mergedProjects = parsed.map((p: any) => {
+          const matchDefault = defaultProjectsList.find(d => d.id === p.id);
+          if (matchDefault && matchDefault.config?.tema) {
+            return {
+              ...p,
+              config: {
+                ...p.config,
+                tema: {
+                  ...matchDefault.config.tema,
+                  ...p.config?.tema
+                }
+              }
+            };
+          }
+          return p;
+        });
+
+        const missingDefaults = defaultProjectsList.filter(
+          def => !mergedProjects.some((p: any) => p.id === def.id || p.config?.slug === def.config.slug)
+        );
+        if (missingDefaults.length > 0) {
+          const combined = [...mergedProjects, ...missingDefaults];
+          setLocalProjects(combined);
+          return combined;
+        }
+        return mergedProjects;
+      }
     }
   } catch (e) {
     console.warn('Could not read from local storage:', e);
@@ -220,7 +248,8 @@ export async function createNewProject(
   mempelai: string, 
   tanggal: string, 
   clientEmail?: string,
-  initialConfig?: Partial<WeddingConfig>
+  initialConfig?: Partial<WeddingConfig>,
+  kategori: InvitationCategory = 'pernikahan'
 ): Promise<WeddingProject> {
   const randomSuffix = Math.random().toString(36).substring(2, 9).toUpperCase();
   const shortId = `MS-${randomSuffix}`;
@@ -230,10 +259,23 @@ export async function createNewProject(
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 
+  // Select base config template based on category
+  let baseConfig = defaultWeddingConfig;
+  let defaultTitle = `The Wedding of ${mempelai}`;
+
+  if (kategori === 'khitan') {
+    baseConfig = defaultKhitanConfig;
+    defaultTitle = `Tasyakuran Khitan ${mempelai}`;
+  } else if (kategori === 'ulang-tahun') {
+    baseConfig = defaultBirthdayConfig;
+    defaultTitle = `Birthday Party - ${mempelai}`;
+  }
+
   const newConfig: WeddingConfig = {
-    ...defaultWeddingConfig,
-    slug: slug || `wedding-${randomSuffix.toLowerCase()}`,
-    judulUndangan: `The Wedding of ${mempelai}`,
+    ...baseConfig,
+    kategori,
+    slug: slug || `${kategori}-${randomSuffix.toLowerCase()}`,
+    judulUndangan: defaultTitle,
     tanggalResmi: tanggal,
     hariTanggalLengkap: tanggal,
     ...(initialConfig || {})
@@ -241,6 +283,7 @@ export async function createNewProject(
 
   const newProject: WeddingProject = {
     id: shortId,
+    kategori,
     mempelai,
     tanggal,
     status: 'Draf',
@@ -252,6 +295,7 @@ export async function createNewProject(
   // Save to Firestore if available
   try {
     await addDoc(collection(db, 'proyek_klien'), {
+      kategori,
       mempelai,
       tanggal,
       status: 'Draf',
