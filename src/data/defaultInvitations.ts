@@ -1,11 +1,17 @@
 import { WeddingProject, WeddingConfig } from '../types/wedding';
 
+// =========================================================================
+// 1. TEMPLATE UNDANGAN PERNIKAHAN (THE WEDDING OF RAKA & SINTA)
+// =========================================================================
 export const defaultWeddingConfig: WeddingConfig = {
+  kategori: 'pernikahan',
+  kerangkaDesain: 'wedding-botanical',
   slug: 'raka-sinta',
   judulUndangan: 'The Wedding of Raka & Sinta',
   labelSampul: 'THE WEDDING OF',
   fotoSampul: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
   subJudulSampul: 'Dengan segala kerendahan hati, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara pernikahan kami.',
+  teksTombol: 'Buka Undangan',
   salamPembuka: 'Assalamu’alaikum Warahmatullahi Wabarakatuh\nDengan memohon rahmat dan ridho Allah Subhanahu Wa Ta’ala, kami bermaksud menyelenggarakan syukuran pernikahan putra-putri kami:',
   kutipanAwal: 'Dua hati, satu tujuan, membangun rumah tangga yang penuh cinta.',
   kutipanAkhir: '“Bersama dalam cinta, menuju hidup yang lebih baik.”',
@@ -119,9 +125,9 @@ export const defaultWeddingConfig: WeddingConfig = {
   
   lokasi: {
     namaTempat: 'Gedung Serbaguna Harmoni',
-    alamatLengkap: 'Jl. Melati No. 12, Cidadap, Kota Bandung, Jawa Barat 40142',
-    googleMapsUrl: 'https://maps.google.com/?q=Bandung+Gedung+Serbaguna',
-    embedMapsUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126748.5634786224!2d107.573116!3d-6.903444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e6398252477f%3A0x146a1f93d3e0f5f0!2sBandung%2C%20Bandung%20City%2C%20West%20Java!5e0!3m2!1sen!2sid!4v1650000000000!5m2!1sen!2sid'
+    alamatLengkap: 'Jl. Melati No. 12, Bandung',
+    googleMapsUrl: 'https://maps.google.com/?q=Gedung+Serbaguna+Harmoni+Bandung',
+    embedMapsUrl: ''
   },
   
   rsvp: {
@@ -152,7 +158,7 @@ export const defaultWeddingConfig: WeddingConfig = {
         atasNama: 'Sinta Dewi'
       }
     ],
-    alamatKado: 'Jl. Melati No. 12, Cidadap, Kota Bandung, Jawa Barat (Penerima: Raka & Sinta)'
+    alamatKado: 'Jl. Melati No. 12, Bandung (Penerima: Raka & Sinta)'
   },
   
   musik: {
@@ -160,25 +166,343 @@ export const defaultWeddingConfig: WeddingConfig = {
     autoplay: false,
     judulLagu: 'A Thousand Years (Instrumental Acoustic)',
     artis: 'The Piano Guys & Cello',
-    // High quality royalty-free romantic wedding acoustic piano
     audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-wedding-acoustic-guitar-112191.mp3'
   },
   
   tema: {
     temaId: 'elegant-botanical',
-    namaTema: 'Elegant Botanical',
-    warnaUtama: '#1F362D', // Deep Emerald Forest
-    warnaLatar: '#FAF7F2', // Soft Cream Parchment
-    warnaAksen: '#C5A059', // Soft Gold
+    namaTema: 'Emerald Botanical',
+    warnaUtama: '#1F362D',
+    warnaLatar: '#FAF7F2',
+    warnaAksen: '#C5A059',
     fontJudul: 'Great Vibes',
     fontIsi: 'Plus Jakarta Sans',
-    ornamen: 'botanical-leaves'
+    ornamen: 'botanical-leaves',
+    styleTampilan: 'classic-botanical',
+    modeNavigasi: 'scroll',
+    teksturKertas: 'vintage-parchment',
+    efekPartikel: 'petals',
+    suaraKertas: true
   }
 };
 
+// =========================================================================
+// 2. TEMPLATE UNDANGAN KHITAN (TASYAKURAN KHITAN RAFI ALFARIZKI)
+// =========================================================================
+export const defaultKhitanConfig: WeddingConfig = {
+  kategori: 'khitan',
+  kerangkaDesain: 'khitan-islamic-blue',
+  slug: 'rafi-alfarizki',
+  judulUndangan: 'Tasyakuran Khitan Ananda Rafi Alfarizki',
+  labelSampul: 'TASYAKURAN KHITAN',
+  fotoSampul: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1000&q=80',
+  subJudulSampul: 'Dengan penuh rasa syukur, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara tasyakuran khitan putra kami.',
+  teksTombol: 'Konfirmasi Kehadiran',
+  salamPembuka: 'Assalamu’alaikum Warahmatullahi Wabarakatuh\nDengan memohon rahmat dan ridho Allah Subhanahu Wa Ta’ala, seraya memanjatkan puji dan syukur atas karunia-Nya, kami bermaksud menyelenggarakan Tasyakuran Walimatul Khitan putra tercinta kami:',
+  kutipanAwal: 'Momen penuh syukur untuk langkah awal yang mulia menuju kedewasaan dan ketaatan ibadah.',
+  kutipanAkhir: '“Semoga menjadi anak yang sholeh, berbakti kepada kedua orang tua, serta bermanfaat bagi agama, nusa, dan bangsa.”',
+  
+  // Profil Khitan
+  anak: {
+    namaLengkap: 'Rafi Alfarizki Pratama',
+    namaPanggilan: 'Rafi',
+    namaAyah: 'Bapak H. Ahmad Fauzi',
+    namaIbu: 'Ibu Hj. Siti Nurjanah',
+    foto: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+    usia: '10 Tahun',
+    doaKhitan: 'Ya Allah, berkahilah ananda Rafi Alfarizki, jadikanlah ia hamba-Mu yang sholeh, rajin beribadah, cerdas, berbakti kepada orang tua, dan menjadi penyejuk hati keluarga.'
+  },
+  
+  pria: {
+    namaLengkap: 'Bapak H. Ahmad Fauzi',
+    namaPanggilan: 'Fauzi',
+    namaAyah: '-',
+    namaIbu: '-',
+    foto: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'
+  },
+  wanita: {
+    namaLengkap: 'Ibu Hj. Siti Nurjanah',
+    namaPanggilan: 'Nurjanah',
+    namaAyah: '-',
+    namaIbu: '-',
+    foto: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'
+  },
+  
+  tanggalResmi: '15 Desember 2025',
+  hariTanggalLengkap: 'Minggu, 15 Desember 2025',
+  tanggalCountdownIso: '2025-12-15T09:00:00',
+  
+  acaraList: [
+    {
+      id: 'acara-khitan',
+      judul: 'Tasyakuran & Doa Bersama',
+      hariTanggal: 'Minggu, 15 Desember 2025',
+      waktu: '10.00 WIB s.d. selesai',
+      zonaWaktu: 'WIB',
+      tempat: 'Kediaman Mempelai / Rumah Kami',
+      alamat: 'Jl. Kenanga No. 8, Tasikmalaya',
+      linkMaps: 'https://maps.google.com/?q=Tasikmalaya',
+      deskripsi: 'Pembacaan ayat suci Al-Qur’an, tausiyah singkat, serta doa bersama untuk kelancaran khitan ananda.'
+    },
+    {
+      id: 'ramah-tamah',
+      judul: 'Ramah Tamah & Santap Siang',
+      hariTanggal: 'Minggu, 15 Desember 2025',
+      waktu: 'Pukul 11.30 WIB – Selesai',
+      zonaWaktu: 'WIB',
+      tempat: 'Kediaman Mempelai / Rumah Kami',
+      alamat: 'Jl. Kenanga No. 8, Tasikmalaya',
+      linkMaps: 'https://maps.google.com/?q=Tasikmalaya',
+      deskripsi: 'Jamuan makan siang prasmanan dan silaturahmi hangat bersama keluarga dan tetangga.'
+    }
+  ],
+  
+  infoTambahan: [
+    {
+      id: 'protokol',
+      icon: 'heart',
+      judul: 'Doa Restu',
+      deskripsi: 'Kehadiran dan untaian doa tulus Bapak/Ibu merupakan kebahagiaan terbesar bagi ananda kami.'
+    },
+    {
+      id: 'parkir-khitan',
+      icon: 'car',
+      judul: 'Tempat Parkir',
+      deskripsi: 'Tersedia kantong parkir tertib di sepanjang jalan lingkungan rumah kami.'
+    }
+  ],
+  
+  kisahCinta: {
+    enabled: false,
+    ceritaList: []
+  },
+  
+  galeri: {
+    enabled: true,
+    deskripsi: 'Koleksi potret ceria Ananda Rafi Alfarizki.',
+    fotoList: [
+      'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  
+  lokasi: {
+    namaTempat: 'Rumah Kami',
+    alamatLengkap: 'Jl. Kenanga No. 8, Tasikmalaya',
+    googleMapsUrl: 'https://maps.google.com/?q=Jl+Kenanga+No+8+Tasikmalaya',
+    embedMapsUrl: ''
+  },
+  
+  rsvp: {
+    enabled: true,
+    deadline: '10 Desember 2025',
+    pesanCatatan: 'Mohon berkenan mengonfirmasi kehadiran Anda guna kelancaran persiapan jamuan tasyakuran.'
+  },
+  
+  bukuTamu: {
+    enabled: true,
+    subJudul: 'Untaian doa restu untuk ananda Rafi Alfarizki.'
+  },
+  
+  amplopDigital: {
+    enabled: true,
+    deskripsi: 'Bagi keluarga atau kerabat yang hendak memberikan tanda kasih kado khitanan untuk ananda, dapat melalui:',
+    rekeningList: [
+      {
+        id: 'rek-khitan-1',
+        bank: 'BCA',
+        noRek: '5220891234',
+        atasNama: 'Ahmad Fauzi (Ayah)'
+      },
+      {
+        id: 'rek-khitan-2',
+        bank: 'Bank Syariah Indonesia (BSI)',
+        noRek: '7112348901',
+        atasNama: 'Siti Nurjanah (Ibu)'
+      }
+    ],
+    alamatKado: 'Jl. Kenanga No. 8, Tasikmalaya (U.p. Ananda Rafi Alfarizki)'
+  },
+  
+  musik: {
+    enabled: true,
+    autoplay: false,
+    judulLagu: 'Instrumental Sholawat Gambus Akustik',
+    artis: 'Nasheed Harmony',
+    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c227bf38.mp3?filename=arabic-oriental-lounge-10777.mp3'
+  },
+  
+  tema: {
+    temaId: 'royal-navy-khitan',
+    namaTema: 'Royal Islamic Blue & Gold',
+    warnaUtama: '#0E3B68', // Deep Islamic Royal Blue
+    warnaLatar: '#F0F6FC', // Sky Blue Parchment
+    warnaAksen: '#D4AF37', // Brilliant Gold
+    fontJudul: 'Playfair Display',
+    fontIsi: 'Plus Jakarta Sans',
+    ornamen: 'islamic-arch',
+    styleTampilan: 'islamic-arch',
+    modeNavigasi: 'flipbook',
+    teksturKertas: 'linen',
+    efekPartikel: 'stars',
+    suaraKertas: true
+  }
+};
+
+// =========================================================================
+// 3. TEMPLATE UNDANGAN ULANG TAHUN (BIRTHDAY PARTY DINDA PERMATA)
+// =========================================================================
+export const defaultBirthdayConfig: WeddingConfig = {
+  kategori: 'ulang-tahun',
+  kerangkaDesain: 'birthday-festive',
+  slug: 'dinda-permata',
+  judulUndangan: 'Birthday Party - Dinda Permata is turning 10!',
+  labelSampul: "YOU'RE INVITED!",
+  fotoSampul: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1000&q=80',
+  subJudulSampul: 'Join us to celebrate Dinda Permata is turning 10! Rayakan kebahagiaan bersama orang-orang terdekat.',
+  teksTombol: 'RSVP Sekarang',
+  salamPembuka: 'Hai Teman-teman & Keluarga Tercinta!\nKalian diundang untuk merayakan hari ulang tahunku yang ke-10 dengan penuh tawa, kue manis, dan berbagai permainan seru!',
+  kutipanAwal: 'Satu dekade penuh keceriaan, kasih sayang, dan tawa manis bersama keluarga & sahabat.',
+  kutipanAkhir: '“Terima kasih telah menjadi bagian dari hari istimewa ini ♥”',
+  
+  // Profil Ulang Tahun
+  ulangTahun: {
+    namaLengkap: 'Dinda Permata Azzahra',
+    namaPanggilan: 'Dinda',
+    usiaKe: '10',
+    foto: 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?auto=format&fit=crop&w=600&q=80',
+    temaPesta: 'Sweet Confetti & Colorful Joy',
+    namaOrtu: 'Bapak Rian & Ibu Maya'
+  },
+  
+  pria: {
+    namaLengkap: 'Dinda Permata',
+    namaPanggilan: 'Dinda',
+    namaAyah: 'Bapak Rian Hidayat',
+    namaIbu: 'Ibu Maya Lestari',
+    foto: 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?auto=format&fit=crop&w=600&q=80'
+  },
+  wanita: {
+    namaLengkap: 'Dinda Permata',
+    namaPanggilan: 'Dinda',
+    namaAyah: 'Bapak Rian Hidayat',
+    namaIbu: 'Ibu Maya Lestari',
+    foto: 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?auto=format&fit=crop&w=600&q=80'
+  },
+  
+  tanggalResmi: '21 Desember 2025',
+  hariTanggalLengkap: 'Sabtu, 21 Desember 2025',
+  tanggalCountdownIso: '2025-12-21T16:00:00',
+  
+  acaraList: [
+    {
+      id: 'party-event',
+      judul: 'Pesta Ulang Tahun & Games',
+      hariTanggal: 'Sabtu, 21 Desember 2025',
+      waktu: '16.00 WIB - Selesai',
+      zonaWaktu: 'WIB',
+      tempat: 'Rumah Kami / Backyard Garden',
+      alamat: 'Jl. Anggrek No. 5, Tasikmalaya',
+      linkMaps: 'https://maps.google.com/?q=Tasikmalaya',
+      deskripsi: 'Keseruan games berhadiah, pertunjukan sulap mini, tiup lilin bersama, dan pembagian bingkisan seru!'
+    }
+  ],
+  
+  infoTambahan: [
+    {
+      id: 'dresscode',
+      icon: 'shirt',
+      judul: 'Dresscode Ceria',
+      deskripsi: 'Pakailah pakaian bernuansa pastel atau warna ceria favoritmu!'
+    },
+    {
+      id: 'snack',
+      icon: 'utensils',
+      judul: 'Snack & Es Krim',
+      deskripsi: 'Berbagai camilan lezat, cupcake, dan es krim warna-warni menunggumu!'
+    }
+  ],
+  
+  kisahCinta: {
+    enabled: false,
+    ceritaList: []
+  },
+  
+  galeri: {
+    enabled: true,
+    deskripsi: 'Momen-momen lucu dan ceria tumbuh kembang Dinda hingga usia 10 tahun.',
+    fotoList: [
+      'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=800&q=80'
+    ]
+  },
+  
+  lokasi: {
+    namaTempat: 'Rumah Kami',
+    alamatLengkap: 'Jl. Anggrek No. 5, Tasikmalaya',
+    googleMapsUrl: 'https://maps.google.com/?q=Jl+Anggrek+No+5+Tasikmalaya',
+    embedMapsUrl: ''
+  },
+  
+  rsvp: {
+    enabled: true,
+    deadline: '18 Desember 2025',
+    pesanCatatan: 'Tolong konfirmasi kehadiranmu ya teman-teman agar kami bisa menyiapkan goody bag spesial untukmu!'
+  },
+  
+  bukuTamu: {
+    enabled: true,
+    subJudul: 'Tuliskan ucapan selamat ulang tahun dan harapan manismu untuk Dinda!'
+  },
+  
+  amplopDigital: {
+    enabled: true,
+    deskripsi: 'Kado dan senyuman teman-teman adalah hadiah terbaik. Namun jika ingin mengirimkan tanda kasih / wishlist kado:',
+    rekeningList: [
+      {
+        id: 'rek-ultah-1',
+        bank: 'BCA (Mama Dinda)',
+        noRek: '7890123456',
+        atasNama: 'Maya Lestari'
+      }
+    ],
+    alamatKado: 'Jl. Anggrek No. 5, Tasikmalaya (U.p. Dinda Permata - Hadiah Ultah)'
+  },
+  
+  musik: {
+    enabled: true,
+    autoplay: false,
+    judulLagu: 'Happy Celebration Fun Acoustic',
+    artis: 'Kids Joy Pop',
+    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792e3.mp3?filename=fun-happy-acoustic-123447.mp3'
+  },
+  
+  tema: {
+    temaId: 'festive-coral',
+    namaTema: 'Sweet Coral & Gold Party',
+    warnaUtama: '#E11D48', // Vibrant Rose Pink
+    warnaLatar: '#FFF9F9', // Light Warm Pastel
+    warnaAksen: '#F59E0B', // Warm Confetti Gold
+    fontJudul: 'Great Vibes',
+    fontIsi: 'Plus Jakarta Sans',
+    ornamen: 'party-balloons',
+    styleTampilan: 'festive-birthday',
+    modeNavigasi: 'flipbook',
+    teksturKertas: 'watercolor-matte',
+    efekPartikel: 'balloons',
+    suaraKertas: true
+  }
+};
+
+// =========================================================================
+// PRESET PROJECTS (MULTI-CATEGORY)
+// =========================================================================
 export const defaultProjectsList: WeddingProject[] = [
   {
     id: 'MS-7B93E2A',
+    kategori: 'pernikahan',
     mempelai: 'Raka & Sinta',
     tanggal: '23 November 2025',
     status: 'Aktif',
@@ -187,7 +511,28 @@ export const defaultProjectsList: WeddingProject[] = [
     config: defaultWeddingConfig
   },
   {
+    id: 'MS-KHITAN01',
+    kategori: 'khitan',
+    mempelai: 'Rafi Alfarizki',
+    tanggal: '15 Desember 2025',
+    status: 'Aktif',
+    dibuatPada: new Date('2025-10-19T08:00:00Z'),
+    clientEmail: 'ahmad.fauzi@gmail.com',
+    config: defaultKhitanConfig
+  },
+  {
+    id: 'MS-ULTAH01',
+    kategori: 'ulang-tahun',
+    mempelai: 'Dinda Permata',
+    tanggal: '21 Desember 2025',
+    status: 'Aktif',
+    dibuatPada: new Date('2025-10-20T11:00:00Z'),
+    clientEmail: 'rian.maya@gmail.com',
+    config: defaultBirthdayConfig
+  },
+  {
     id: 'MS-A41F90C',
+    kategori: 'pernikahan',
     mempelai: 'Dimas & Anisa',
     tanggal: '12 Desember 2025',
     status: 'Aktif',
@@ -198,36 +543,7 @@ export const defaultProjectsList: WeddingProject[] = [
       slug: 'dimas-anisa',
       judulUndangan: 'The Wedding of Dimas & Anisa',
       tanggalResmi: '12 Desember 2025',
-      hariTanggalLengkap: 'Jumat, 12 Desember 2025',
-      pria: {
-        ...defaultWeddingConfig.pria,
-        namaLengkap: 'Dimas Setiawan, S.Kom.',
-        namaPanggilan: 'Dimas',
-        namaAyah: 'Bapak H. Hendra Setiawan',
-        namaIbu: 'Ibu Hj. Rina Marlina'
-      },
-      wanita: {
-        ...defaultWeddingConfig.wanita,
-        namaLengkap: 'Anisa Rahmawati, S.Farm.',
-        namaPanggilan: 'Anisa',
-        namaAyah: 'Bapak Ir. Bambang Tri',
-        namaIbu: 'Ibu Sri Wahyuni'
-      }
-    }
-  },
-  {
-    id: 'MS-E882C15',
-    mempelai: 'Fahmi & Nadya',
-    tanggal: '18 Januari 2026',
-    status: 'Draf',
-    dibuatPada: new Date('2025-10-21T09:15:00Z'),
-    clientEmail: 'fahmi.nadya@gmail.com',
-    config: {
-      ...defaultWeddingConfig,
-      slug: 'fahmi-nadya',
-      judulUndangan: 'The Wedding of Fahmi & Nadya',
-      tanggalResmi: '18 Januari 2026',
-      hariTanggalLengkap: 'Minggu, 18 Januari 2026'
+      hariTanggalLengkap: 'Jumat, 12 Desember 2025'
     }
   }
 ];
