@@ -43,16 +43,45 @@ export interface BankAccount {
   qrisUrl?: string;
 }
 
+export type InvitationCategory = 'pernikahan' | 'khitan' | 'ulang-tahun';
+
+export interface ChildProfile {
+  namaLengkap: string;
+  namaPanggilan: string;
+  namaAyah: string;
+  namaIbu: string;
+  foto: string;
+  usia?: string;
+  doaKhitan?: string;
+}
+
+export interface BirthdayProfile {
+  namaLengkap: string;
+  namaPanggilan: string;
+  usiaKe: number | string;
+  foto: string;
+  temaPesta?: string;
+  namaOrtu?: string;
+}
+
 export interface WeddingConfig {
   slug: string;
   judulUndangan: string;
   salamPembuka: string;
   kutipanAwal: string;
   kutipanAkhir: string;
+  kategori?: InvitationCategory; // 'pernikahan' | 'khitan' | 'ulang-tahun'
+  kerangkaDesain?: string; // e.g. 'wedding-botanical', 'khitan-islamic-blue', 'birthday-festive'
   
-  // Mempelai
+  // Mempelai (Untuk Pernikahan)
   pria: PersonProfile;
   wanita: PersonProfile;
+  
+  // Profil Khitan
+  anak?: ChildProfile;
+  
+  // Profil Ulang Tahun
+  ulangTahun?: BirthdayProfile;
   
   // Sampul
   labelSampul: string;
@@ -131,13 +160,18 @@ export interface WeddingConfig {
     fontJudul: string;
     fontIsi: string;
     ornamen: string;
-    styleTampilan?: 'classic-botanical' | 'modern-clean' | 'luxury-gold' | 'romantic-floral';
+    styleTampilan?: 'classic-botanical' | 'modern-clean' | 'luxury-gold' | 'romantic-floral' | 'islamic-arch' | 'festive-birthday';
+    modeNavigasi?: 'scroll' | 'flipbook';
+    teksturKertas?: 'none' | 'vintage-parchment' | 'linen' | 'watercolor-matte';
+    efekPartikel?: 'none' | 'petals' | 'sparkles' | 'stars' | 'balloons';
+    suaraKertas?: boolean;
   };
 }
 
 export interface WeddingProject {
   id: string; // Document ID in Firestore, e.g. "MS-RAKASIN"
-  mempelai: string; // "Raka & Sinta"
+  kategori?: InvitationCategory; // 'pernikahan' | 'khitan' | 'ulang-tahun'
+  mempelai: string; // "Raka & Sinta" or "Rafi Alfarizki" or "Dinda Permata"
   tanggal: string; // "23 Nov 2025"
   status: 'Aktif' | 'Draf';
   dibuatPada: any;
