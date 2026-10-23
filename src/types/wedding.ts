@@ -122,14 +122,16 @@ export interface WeddingConfig {
   
   // Tema & Gaya
   tema: {
-    temaId: 'elegant-botanical' | 'romantic-rose' | 'minimalist-gold' | 'emerald-luxury';
+    temaId: string;
     namaTema: string;
-    warnaUtama: string;
-    warnaLatar: string;
-    warnaAksen: string;
+    warnaUtama: string; // Primary accent color (buttons, main titles)
+    warnaLatar: string; // Background tone (canvas)
+    warnaAksen: string; // Secondary gold/accent tone
+    warnaKartu?: string; // Card background
     fontJudul: string;
     fontIsi: string;
     ornamen: string;
+    styleTampilan?: 'classic-botanical' | 'modern-clean' | 'luxury-gold' | 'romantic-floral';
   };
 }
 
