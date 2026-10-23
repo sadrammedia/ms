@@ -1,6 +1,6 @@
 {
   "name": "MS Undangan Digital",
-  "description": "Platform undangan pernikahan digital modern, elegan, dan interaktif dengan editor dinamis, galeri foto, RSVP, buku ucapan, dan tema botanical.",
+  "description": "Platform undangan digital multi-momen modern dan elegan untuk Pernikahan, Tasyakuran Khitan, dan Pesta Ulang Tahun dengan editor dinamis, RSVP, dan galeri.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
