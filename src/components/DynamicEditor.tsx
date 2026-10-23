@@ -787,44 +787,170 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
 
             {/* TAB: TEMA & DESAIN */}
             {activeTab === 'tema' && (
-              <div className="space-y-4">
-                <h4 className="font-serif font-bold text-slate-900 mb-1">Pilihan Tema Visual</h4>
-                <p className="text-slate-500 text-[11px] mb-3">Pilih tema preset dengan estetika harmoni</p>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-serif font-bold text-slate-900 mb-1">Pilihan Palet Warna Tema</h4>
+                  <p className="text-slate-500 text-[11px] mb-3">Pilih tema warna yang sesuai dengan konsep atau dresscode pernikahan</p>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: 'elegant-botanical', name: 'Elegant Botanical', bg: '#FAF7F2', primary: '#1F362D', accent: '#C5A059' },
-                    { id: 'romantic-rose', name: 'Romantic Rose', bg: '#FDF8F7', primary: '#6B3E45', accent: '#D4A373' },
-                    { id: 'minimalist-gold', name: 'Minimalist Ivory', bg: '#FBFBFA', primary: '#2D3142', accent: '#BFA054' },
-                    { id: 'emerald-luxury', name: 'Emerald Luxury', bg: '#F4F7F4', primary: '#0D3B2E', accent: '#D4AF37' }
-                  ].map(thm => (
-                    <div
-                      key={thm.id}
-                      onClick={() => setFormData({
-                        ...formData,
-                        tema: {
-                          ...formData.tema,
-                          temaId: thm.id as any,
-                          namaTema: thm.name,
-                          warnaUtama: thm.primary,
-                          warnaLatar: thm.bg,
-                          warnaAksen: thm.accent
-                        }
-                      })}
-                      className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                        formData.tema.temaId === thm.id 
-                          ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-sm' 
-                          : 'border-slate-200 bg-slate-50 hover:bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: thm.primary }} />
-                        <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: thm.accent }} />
-                        <span className="w-3.5 h-3.5 rounded-full border border-slate-200" style={{ backgroundColor: thm.bg }} />
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'elegant-botanical', name: 'Emerald Botanical', bg: '#FAF7F2', primary: '#1F362D', accent: '#C5A059' },
+                      { id: 'romantic-rose', name: 'Dusty Rose & Terracotta', bg: '#FDF8F7', primary: '#7D3C4D', accent: '#C47B62' },
+                      { id: 'royal-navy', name: 'Royal Navy & Champagne', bg: '#F8F9FA', primary: '#14213D', accent: '#CCA43B' },
+                      { id: 'midnight-luxury', name: 'Midnight Charcoal & Gold', bg: '#FAFAFA', primary: '#18181B', accent: '#D4AF37' },
+                      { id: 'sage-nature', name: 'Sage Olive & Linen', bg: '#F6F4EE', primary: '#3B4D3A', accent: '#B89742' },
+                      { id: 'maroon-glamour', name: 'Crimson Maroon & Brass', bg: '#FCF8F5', primary: '#5C1D24', accent: '#D4A373' },
+                      { id: 'lavender-dream', name: 'Lavender & Rose Gold', bg: '#FAF7FC', primary: '#54426B', accent: '#D4A5B8' },
+                      { id: 'minimalist-gold', name: 'Minimalist Ivory & Champagne', bg: '#FBFBFA', primary: '#2D3142', accent: '#BFA054' },
+                    ].map(thm => (
+                      <div
+                        key={thm.id}
+                        onClick={() => setFormData({
+                          ...formData,
+                          tema: {
+                            ...formData.tema,
+                            temaId: thm.id,
+                            namaTema: thm.name,
+                            warnaUtama: thm.primary,
+                            warnaLatar: thm.bg,
+                            warnaAksen: thm.accent
+                          }
+                        })}
+                        className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                          formData.tema.temaId === thm.id 
+                            ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs' 
+                            : 'border-slate-200 bg-slate-50 hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="w-4 h-4 rounded-full shadow-xs" style={{ backgroundColor: thm.primary }} />
+                          <span className="w-4 h-4 rounded-full shadow-xs" style={{ backgroundColor: thm.accent }} />
+                          <span className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: thm.bg }} />
+                        </div>
+                        <h5 className="font-serif font-bold text-xs text-slate-900 leading-tight">{thm.name}</h5>
                       </div>
-                      <h5 className="font-serif font-bold text-xs text-slate-900">{thm.name}</h5>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gaya Tampilan & Ornamen */}
+                <div>
+                  <h4 className="font-serif font-bold text-slate-900 mb-1">Gaya Tampilan / Style Ornamen</h4>
+                  <p className="text-slate-500 text-[11px] mb-3">Tentukan gaya visual kartu dan ornamen dekoratif</p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'classic-botanical', name: 'Classic Botanical', desc: 'Dedaunan watercolor & divider emas vintage' },
+                      { id: 'modern-clean', name: 'Modern Minimalist', desc: 'Bersih, garis geometris halus, tanpa bunga' },
+                      { id: 'luxury-gold', name: 'Luxury Royal', desc: 'Aksen emas mengkilap & bingkai formal' },
+                      { id: 'romantic-floral', name: 'Romantic Soft', desc: 'Nuansa lembut romantis pastel' },
+                    ].map(st => (
+                      <div
+                        key={st.id}
+                        onClick={() => setFormData({
+                          ...formData,
+                          tema: {
+                            ...formData.tema,
+                            styleTampilan: st.id as any
+                          }
+                        })}
+                        className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                          (formData.tema.styleTampilan || 'classic-botanical') === st.id
+                            ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs'
+                            : 'border-slate-200 bg-slate-50 hover:bg-white'
+                        }`}
+                      >
+                        <h5 className="font-serif font-bold text-xs text-slate-900 mb-0.5">{st.name}</h5>
+                        <p className="text-[10px] text-slate-500 leading-tight">{st.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Color Adjustment */}
+                <div>
+                  <h4 className="font-serif font-bold text-slate-900 mb-1">Kustomisasi Warna Bebas</h4>
+                  <p className="text-slate-500 text-[11px] mb-3">Sesuaikan kode warna jika memiliki dresscode khusus</p>
+
+                  <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-1">Warna Utama</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={formData.tema.warnaUtama}
+                          onChange={e => setFormData({
+                            ...formData,
+                            tema: { ...formData.tema, warnaUtama: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-slate-300 p-0.5 bg-white"
+                        />
+                        <span className="font-mono text-[10px] text-slate-600 uppercase">{formData.tema.warnaUtama}</span>
+                      </div>
                     </div>
-                  ))}
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-1">Warna Aksen</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={formData.tema.warnaAksen}
+                          onChange={e => setFormData({
+                            ...formData,
+                            tema: { ...formData.tema, warnaAksen: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-slate-300 p-0.5 bg-white"
+                        />
+                        <span className="font-mono text-[10px] text-slate-600 uppercase">{formData.tema.warnaAksen}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-600 mb-1">Warna Latar</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={formData.tema.warnaLatar}
+                          onChange={e => setFormData({
+                            ...formData,
+                            tema: { ...formData.tema, warnaLatar: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-slate-300 p-0.5 bg-white"
+                        />
+                        <span className="font-mono text-[10px] text-slate-600 uppercase">{formData.tema.warnaLatar}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Font Kaligrafi Judul */}
+                <div>
+                  <h4 className="font-serif font-bold text-slate-900 mb-1">Pilihan Tipografi Nama Mempelai</h4>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {[
+                      { id: 'Great Vibes', name: 'Great Vibes', sample: 'Raka & Sinta', class: 'font-script text-xl' },
+                      { id: 'Alex Brush', name: 'Alex Brush', sample: 'Raka & Sinta', class: 'font-alex text-xl' },
+                      { id: 'Playfair Display', name: 'Playfair Serif', sample: 'Raka & Sinta', class: 'font-serif text-sm font-bold' },
+                      { id: 'Cinzel', name: 'Cinzel Roman', sample: 'RAKA & SINTA', class: 'font-cinzel text-xs font-bold' }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setFormData({
+                          ...formData,
+                          tema: { ...formData.tema, fontJudul: f.id }
+                        })}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          formData.tema.fontJudul === f.id
+                            ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white'
+                            : 'border-slate-200 bg-slate-50 hover:bg-white'
+                        }`}
+                      >
+                        <span className="text-[10px] text-slate-400 block mb-1">{f.name}</span>
+                        <span className={`${f.class} text-slate-800`}>{f.sample}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
