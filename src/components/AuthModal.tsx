@@ -28,7 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const result = await loginWithCredentials(email, password);
+      const result = await loginWithCredentials(email, password, activeTab);
       onSuccess(result);
       onClose();
     } catch (err: any) {
