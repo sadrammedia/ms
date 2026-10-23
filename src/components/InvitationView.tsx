@@ -905,7 +905,9 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             </button>
 
             <div className="mt-12 text-[10px] text-slate-400 font-sans tracking-wide">
-              MS Undangan Digital © {new Date().getFullYear()} · All Rights Reserved
+              <a href="/admin" className="hover:text-slate-600 transition-colors">
+                MS Undangan Digital © {new Date().getFullYear()} · All Rights Reserved
+              </a>
             </div>
           </footer>
 
