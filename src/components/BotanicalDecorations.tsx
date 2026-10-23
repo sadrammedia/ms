@@ -1,15 +1,30 @@
 import React from 'react';
 
 // Delicate Gold Floral Center Divider (as seen in the mockup under couple names)
-export const GoldFloralDivider: React.FC<{ className?: string }> = ({ className = "w-6 h-6 text-[#C5A059]" }) => (
-  <div className={`flex items-center justify-center gap-3 my-3 ${className}`}>
-    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-[#C5A059]/60 to-[#C5A059]" />
-    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-[#C5A059]" stroke="currentColor" strokeWidth="1.5">
-      <path d="M12 2C12 2 13.5 6 17 8C13.5 10 12 14 12 14C12 14 10.5 10 7 8C10.5 6 12 2 12 2Z" fill="#C5A059" fillOpacity="0.25" />
-      <circle cx="12" cy="8" r="1.5" fill="#C5A059" />
+export const GoldFloralDivider: React.FC<{ className?: string; color?: string }> = ({ 
+  className = "my-3",
+  color = "#C5A059"
+}) => (
+  <div className={`flex items-center justify-center gap-3 ${className}`}>
+    <div className="h-[1px] w-12" style={{ background: `linear-gradient(to right, transparent, ${color}99, ${color})` }} />
+    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" style={{ color }} stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 2C12 2 13.5 6 17 8C13.5 10 12 14 12 14C12 14 10.5 10 7 8C10.5 6 12 2 12 2Z" fill="currentColor" fillOpacity="0.25" />
+      <circle cx="12" cy="8" r="1.5" fill="currentColor" />
       <path d="M7 17C10 16 12 14 12 14C12 14 14 16 17 17" strokeLinecap="round" />
     </svg>
-    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent via-[#C5A059]/60 to-[#C5A059]" />
+    <div className="h-[1px] w-12" style={{ background: `linear-gradient(to left, transparent, ${color}99, ${color})` }} />
+  </div>
+);
+
+// Sleek Minimalist Geometric Divider for modern theme
+export const ModernDivider: React.FC<{ className?: string; color?: string }> = ({
+  className = "my-3",
+  color = "#1F362D"
+}) => (
+  <div className={`flex items-center justify-center gap-2 ${className}`}>
+    <div className="h-[1px] w-12" style={{ backgroundColor: `${color}40` }} />
+    <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: color }} />
+    <div className="h-[1px] w-12" style={{ backgroundColor: `${color}40` }} />
   </div>
 );
 
