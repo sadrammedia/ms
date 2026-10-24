@@ -1300,42 +1300,65 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             </p>
 
             {/* Map Preview Card */}
-            <div className="bg-white p-4 rounded-3xl shadow-xs border border-slate-100 max-w-sm mx-auto mb-6">
-              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 mb-3 border border-slate-100 relative">
-                {config.lokasi.embedMapsUrl ? (
-                  <iframe
-                    src={config.lokasi.embedMapsUrl}
-                    title="Peta Lokasi"
-                    className="w-full h-full border-0"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-emerald-50/50">
-                    <MapPin className="w-8 h-8 text-rose-500 mb-1 animate-bounce" />
-                    <span className="font-serif font-bold text-xs text-slate-800">{config.lokasi.namaTempat}</span>
-                    <span className="text-[10px] text-slate-500 text-center">{config.lokasi.alamatLengkap}</span>
+            {(() => {
+              const locationQuery = [config.lokasi?.namaTempat, config.lokasi?.alamatLengkap]
+                .filter(Boolean)
+                .join(' ')
+                .trim() || config.acaraList?.[0]?.tempat || '';
+
+              const isOldBandungTemplate = config.lokasi?.embedMapsUrl && (
+                config.lokasi.embedMapsUrl.includes('Bandung%2C%20Bandung') ||
+                config.lokasi.embedMapsUrl.includes('0x2e68e6398252477f')
+              );
+
+              const shouldGenerateDynamicEmbed = !config.lokasi?.embedMapsUrl || (isOldBandungTemplate && locationQuery && !locationQuery.toLowerCase().includes('bandung'));
+
+              const effectiveEmbedUrl = shouldGenerateDynamicEmbed && locationQuery
+                ? `https://maps.google.com/maps?q=${encodeURIComponent(locationQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+                : (config.lokasi?.embedMapsUrl || (locationQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(locationQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : ''));
+
+              const directMapsLink = config.lokasi?.googleMapsUrl || (locationQuery ? `https://maps.google.com/?q=${encodeURIComponent(locationQuery)}` : '#');
+
+              return (
+                <div className="bg-white p-4 rounded-3xl shadow-xs border border-slate-100 max-w-sm mx-auto mb-6">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 mb-3 border border-slate-100 relative">
+                    {effectiveEmbedUrl ? (
+                      <iframe
+                        src={effectiveEmbedUrl}
+                        title="Peta Lokasi"
+                        className="w-full h-full border-0"
+                        loading="lazy"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-emerald-50/50">
+                        <MapPin className="w-8 h-8 text-rose-500 mb-1 animate-bounce" />
+                        <span className="font-serif font-bold text-xs text-slate-800">{config.lokasi?.namaTempat || 'Lokasi Acara'}</span>
+                        <span className="text-[10px] text-slate-500 text-center">{config.lokasi?.alamatLengkap}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              <div className="text-center mb-3">
-                <h4 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
-                  {config.lokasi.namaTempat}
-                </h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">{config.lokasi.alamatLengkap}</p>
-              </div>
+                  <div className="text-center mb-3">
+                    <h4 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
+                      {config.lokasi?.namaTempat || config.acaraList?.[0]?.tempat || 'Lokasi Acara'}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{config.lokasi?.alamatLengkap || config.acaraList?.[0]?.alamat}</p>
+                  </div>
 
-              <a
-                href={config.lokasi.googleMapsUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 px-4 rounded-xl text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow transition-opacity hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <MapPin className="w-3.5 h-3.5" style={{ color: accentColor }} />
-                Buka di Google Maps
-              </a>
-            </div>
+                  <a
+                    href={directMapsLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 px-4 rounded-xl text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <MapPin className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                    Buka di Google Maps
+                  </a>
+                </div>
+              );
+            })()}
 
             {/* Informasi Tambahan */}
             <div className="max-w-sm mx-auto space-y-2.5 text-left">
