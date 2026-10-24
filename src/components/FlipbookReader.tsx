@@ -618,19 +618,22 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
                         </div>
                       </div>
 
-                      {acara.linkMaps && (
-                        <div className="pt-1">
-                          <a
-                            href={acara.linkMaps}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 hover:text-amber-800 underline"
-                          >
-                            <span>Buka di Google Maps</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      )}
+                      {(() => {
+                        const directLink = acara.linkMaps || config.lokasi?.googleMapsUrl || `https://maps.google.com/?q=${encodeURIComponent([acara.tempat, acara.alamat].filter(Boolean).join(' '))}`;
+                        return (
+                          <div className="pt-1">
+                            <a
+                              href={directLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 hover:text-amber-800 underline"
+                            >
+                              <span>Buka di Google Maps</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
 
