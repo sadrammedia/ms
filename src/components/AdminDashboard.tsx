@@ -109,16 +109,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!editProject) return;
 
     try {
+      const updatedConfig = editProject.config ? {
+        ...editProject.config,
+        tanggalResmi: editTanggal,
+        hariTanggalLengkap: editProject.config.hariTanggalLengkap || editTanggal,
+        acaraList: editProject.config.acaraList?.map(a => ({
+          ...a,
+          hariTanggal: a.hariTanggal || editTanggal
+        })) || []
+      } : undefined;
+
       await updateProject(editProject.id, {
         mempelai: editMempelai,
         tanggal: editTanggal,
-        status: editStatus
+        status: editStatus,
+        ...(updatedConfig ? { config: updatedConfig } : {})
       });
       setEditProject(null);
       onRefresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Gagal menyimpan perubahan.');
+      alert(`Gagal menyimpan perubahan: ${err.message || 'Koneksi bermasalah'}`);
     }
   };
 
