@@ -267,3 +267,83 @@ export function getCoverGreetingBoxStyles(
     cardStyle,
   };
 }
+
+/**
+ * Returns typography classes & inline styles for cover text elements:
+ * 1. Subjudul / Kalimat Pengantar (tanda kurung merah tengah)
+ * 2. Judul Pengantin / Mempelai (tanda kurung merah atas)
+ * 3. Info Tanggal & Lokasi (tanda kurung merah bawah)
+ */
+export function getCoverTextStyles(
+  layout?: LayoutConfig,
+  defaultPrimaryColor: string = '#1F362D'
+): {
+  subJudulStyle: CSSProperties;
+  subJudulSizeClass: string;
+  judulStyle: CSSProperties;
+  judulSizeClass: string;
+  infoStyle: CSSProperties;
+  infoSizeClass: string;
+} {
+  const cfg = layout?.gayaTeksSampul;
+
+  // 1. Subjudul / Kalimat Pengantar
+  const subJudulColor = cfg?.subJudulWarna || '#334155';
+  let subJudulSizeClass = 'text-xs md:text-sm';
+  if (cfg?.subJudulUkuran === 'xs') subJudulSizeClass = 'text-[11px] md:text-xs';
+  else if (cfg?.subJudulUkuran === 'sm') subJudulSizeClass = 'text-xs md:text-sm';
+  else if (cfg?.subJudulUkuran === 'base') subJudulSizeClass = 'text-sm md:text-base';
+  else if (cfg?.subJudulUkuran === 'lg') subJudulSizeClass = 'text-base md:text-lg';
+  else if (cfg?.subJudulUkuran === 'xl') subJudulSizeClass = 'text-lg md:text-xl';
+
+  const subJudulStyle: CSSProperties = {
+    color: subJudulColor,
+    fontWeight: cfg?.subJudulBold ? 700 : undefined,
+    fontStyle: cfg?.subJudulItalic ? 'italic' : undefined,
+    textShadow: cfg?.subJudulShadow 
+      ? '0 1px 3px rgba(0,0,0,0.7), 0 0 10px rgba(255,255,255,0.8)' 
+      : undefined,
+    textAlign: cfg?.subJudulAlign || 'center',
+  };
+
+  // 2. Judul Pengantin / Mempelai
+  const judulColor = cfg?.judulWarna || defaultPrimaryColor;
+  let judulSizeClass = 'text-5xl md:text-6xl';
+  if (cfg?.judulUkuran === 'sm') judulSizeClass = 'text-3xl md:text-4xl';
+  else if (cfg?.judulUkuran === 'md') judulSizeClass = 'text-4xl md:text-5xl';
+  else if (cfg?.judulUkuran === 'lg') judulSizeClass = 'text-5xl md:text-6xl';
+  else if (cfg?.judulUkuran === 'xl') judulSizeClass = 'text-6xl md:text-7xl';
+  else if (cfg?.judulUkuran === '2xl') judulSizeClass = 'text-7xl md:text-8xl';
+
+  const judulStyle: CSSProperties = {
+    color: judulColor,
+    fontWeight: cfg?.judulBold ? 800 : undefined,
+    textShadow: cfg?.judulShadow 
+      ? '0 2px 8px rgba(0,0,0,0.6), 0 0 14px rgba(255,255,255,0.7)' 
+      : undefined,
+  };
+
+  // 3. Info Tanggal & Lokasi
+  const infoColor = cfg?.infoWarna || '#334155';
+  let infoSizeClass = 'text-xs';
+  if (cfg?.infoUkuran === 'xs') infoSizeClass = 'text-[10px] md:text-[11px]';
+  else if (cfg?.infoUkuran === 'sm') infoSizeClass = 'text-xs md:text-sm';
+  else if (cfg?.infoUkuran === 'base') infoSizeClass = 'text-sm md:text-base';
+
+  const infoStyle: CSSProperties = {
+    color: infoColor,
+    fontWeight: cfg?.infoBold ? 700 : undefined,
+    textShadow: cfg?.infoShadow 
+      ? '0 1px 4px rgba(0,0,0,0.7), 0 0 8px rgba(255,255,255,0.8)' 
+      : undefined,
+  };
+
+  return {
+    subJudulStyle,
+    subJudulSizeClass,
+    judulStyle,
+    judulSizeClass,
+    infoStyle,
+    infoSizeClass,
+  };
+}
