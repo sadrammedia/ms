@@ -168,11 +168,55 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
       hariTanggal: item.hariTanggal || currentHariTanggal
     }));
 
+    // Synchronize location:
+    // If user edited an event venue or filled in specific values,
+    // ensure effective main venue & address are synced to formData.lokasi
+    let effectiveNamaTempat = formData.lokasi?.namaTempat || '';
+    let effectiveAlamatLengkap = formData.lokasi?.alamatLengkap || '';
+
+    // Check if user changed an event in acaraList and lokasi is still the default Bandung template
+    const lastEvent = formData.acaraList[formData.acaraList.length - 1];
+    const firstEvent = formData.acaraList[0];
+    const candidateEvent = (lastEvent?.tempat && lastEvent.tempat !== 'Gedung Serbaguna Harmoni')
+      ? lastEvent
+      : (firstEvent?.tempat && firstEvent.tempat !== 'Gedung Serbaguna Harmoni' ? firstEvent : null);
+
+    if (
+      (!effectiveNamaTempat || effectiveNamaTempat === 'Gedung Serbaguna Harmoni') &&
+      candidateEvent?.tempat
+    ) {
+      effectiveNamaTempat = candidateEvent.tempat;
+      effectiveAlamatLengkap = candidateEvent.alamat || effectiveAlamatLengkap;
+    }
+
+    const mapQuery = [effectiveNamaTempat, effectiveAlamatLengkap].filter(Boolean).join(' ').trim();
+    let effectiveEmbed = formData.lokasi?.embedMapsUrl || '';
+
+    const isBandungEmbed = effectiveEmbed && (
+      effectiveEmbed.includes('Bandung%2C%20Bandung') ||
+      effectiveEmbed.includes('0x2e68e6398252477f')
+    );
+
+    if (!effectiveEmbed || (isBandungEmbed && mapQuery && !mapQuery.toLowerCase().includes('bandung'))) {
+      if (mapQuery) {
+        effectiveEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      }
+    }
+
+    const finalLokasi = {
+      ...formData.lokasi,
+      namaTempat: effectiveNamaTempat || formData.lokasi?.namaTempat || 'Lokasi Acara',
+      alamatLengkap: effectiveAlamatLengkap || formData.lokasi?.alamatLengkap || '',
+      embedMapsUrl: effectiveEmbed,
+      googleMapsUrl: formData.lokasi?.googleMapsUrl || (candidateEvent?.linkMaps || (mapQuery ? `https://maps.google.com/?q=${encodeURIComponent(mapQuery)}` : ''))
+    };
+
     const finalConfig: WeddingConfig = {
       ...formData,
       tanggalResmi: currentTanggal,
       hariTanggalLengkap: currentHariTanggal,
-      acaraList: syncedAcaraList
+      acaraList: syncedAcaraList,
+      lokasi: finalLokasi
     };
 
     const updatedProject: WeddingProject = {
@@ -208,6 +252,18 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
     }
   };
 
+  // Compute live location for the preview pane
+  const previewNamaTempat = formData.lokasi?.namaTempat || formData.acaraList?.[formData.acaraList.length - 1]?.tempat || formData.acaraList?.[0]?.tempat || 'Lokasi Acara';
+  const previewAlamat = formData.lokasi?.alamatLengkap || formData.acaraList?.[formData.acaraList.length - 1]?.alamat || formData.acaraList?.[0]?.alamat || '';
+  const previewMapQuery = [previewNamaTempat, previewAlamat].filter(Boolean).join(' ').trim();
+  const isPreviewBandungEmbed = formData.lokasi?.embedMapsUrl && (
+    formData.lokasi.embedMapsUrl.includes('Bandung%2C%20Bandung') ||
+    formData.lokasi.embedMapsUrl.includes('0x2e68e6398252477f')
+  );
+  const previewEmbedUrl = (!formData.lokasi?.embedMapsUrl || (isPreviewBandungEmbed && previewMapQuery && !previewMapQuery.toLowerCase().includes('bandung')))
+    ? (previewMapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(previewMapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : formData.lokasi?.embedMapsUrl)
+    : formData.lokasi?.embedMapsUrl;
+
   const dummyProjectForPreview: WeddingProject = {
     ...project,
     kategori: formData.kategori,
@@ -218,7 +274,15 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
       : `${formData.pria.namaPanggilan || 'Raka'} & ${formData.wanita.namaPanggilan || 'Sinta'}`,
     tanggal: formData.tanggalResmi,
     status: projectStatus,
-    config: formData
+    config: {
+      ...formData,
+      lokasi: {
+        ...formData.lokasi,
+        namaTempat: previewNamaTempat,
+        alamatLengkap: previewAlamat,
+        embedMapsUrl: previewEmbedUrl
+      }
+    }
   };
 
   return (
@@ -1026,14 +1090,56 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-500 text-[10px]">Nama Tempat / Gedung / Rumah</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-slate-500 text-[10px]">Nama Tempat / Gedung / Rumah</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newLoc = {
+                              ...formData.lokasi,
+                              namaTempat: acara.tempat || formData.lokasi.namaTempat,
+                              alamatLengkap: acara.alamat || formData.lokasi.alamatLengkap,
+                              googleMapsUrl: acara.linkMaps || formData.lokasi.googleMapsUrl
+                            };
+                            const q = [acara.tempat, acara.alamat].filter(Boolean).join(' ').trim();
+                            if (q) {
+                              newLoc.embedMapsUrl = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                            }
+                            setFormData(prev => ({ ...prev, lokasi: newLoc }));
+                            setSaveToast(`Lokasi peta disamakan dengan ${acara.judul}!`);
+                            setTimeout(() => setSaveToast(null), 3000);
+                          }}
+                          className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer flex items-center gap-1"
+                          title="Klik untuk menjadikan tempat ini sebagai lokasi peta utama"
+                        >
+                          📍 Jadikan Peta Utama
+                        </button>
+                      </div>
                       <input
                         type="text"
                         value={acara.tempat}
                         onChange={e => {
+                          const val = e.target.value;
                           const copy = [...formData.acaraList];
-                          copy[idx].tempat = e.target.value;
-                          setFormData({ ...formData, acaraList: copy });
+                          const oldVal = copy[idx].tempat;
+                          copy[idx].tempat = val;
+
+                          // If main lokasi was matching oldVal or default template, auto-sync it!
+                          const shouldAutoSync = !formData.lokasi.namaTempat || 
+                            formData.lokasi.namaTempat === 'Gedung Serbaguna Harmoni' || 
+                            formData.lokasi.namaTempat === oldVal;
+
+                          const updatedLoc = shouldAutoSync ? {
+                            ...formData.lokasi,
+                            namaTempat: val,
+                            alamatLengkap: copy[idx].alamat || formData.lokasi.alamatLengkap
+                          } : formData.lokasi;
+
+                          setFormData({ 
+                            ...formData, 
+                            acaraList: copy,
+                            lokasi: updatedLoc
+                          });
                         }}
                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
                       />
@@ -1044,9 +1150,25 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                         type="text"
                         value={acara.alamat}
                         onChange={e => {
+                          const val = e.target.value;
                           const copy = [...formData.acaraList];
-                          copy[idx].alamat = e.target.value;
-                          setFormData({ ...formData, acaraList: copy });
+                          const oldVal = copy[idx].alamat;
+                          copy[idx].alamat = val;
+
+                          const shouldAutoSync = !formData.lokasi.alamatLengkap || 
+                            formData.lokasi.alamatLengkap.includes('Melati No. 12') || 
+                            formData.lokasi.alamatLengkap === oldVal;
+
+                          const updatedLoc = shouldAutoSync ? {
+                            ...formData.lokasi,
+                            alamatLengkap: val
+                          } : formData.lokasi;
+
+                          setFormData({ 
+                            ...formData, 
+                            acaraList: copy,
+                            lokasi: updatedLoc
+                          });
                         }}
                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
                       />
@@ -1054,19 +1176,126 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                   </div>
                 ))}
 
-                <div>
-                  <h4 className="font-serif font-bold text-slate-900 mb-2">Tautan Peta & Navigasi</h4>
+                {/* LOKASI UTAMA & PETA NAVIGASI */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-serif font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-emerald-700" />
+                      <span>Lokasi Utama & Peta Navigasi (Google Maps)</span>
+                    </h4>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Tampil di Peta</span>
+                  </div>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Informasi gedung dan alamat ini yang akan tampil di kartu <strong>Peta & Navigasi</strong> serta cuplikan lokasi sampul.
+                  </p>
+
+                  {/* Quick Copy Buttons */}
+                  {formData.acaraList.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-slate-500 font-medium">Samakan cepat dari:</span>
+                      {formData.acaraList.map((ac, aIdx) => (
+                        <button
+                          key={aIdx}
+                          type="button"
+                          onClick={() => {
+                            const q = [ac.tempat, ac.alamat].filter(Boolean).join(' ').trim();
+                            const newEmbed = q ? `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : formData.lokasi.embedMapsUrl;
+                            setFormData(prev => ({
+                              ...prev,
+                              lokasi: {
+                                ...prev.lokasi,
+                                namaTempat: ac.tempat || prev.lokasi.namaTempat,
+                                alamatLengkap: ac.alamat || prev.lokasi.alamatLengkap,
+                                googleMapsUrl: ac.linkMaps || prev.lokasi.googleMapsUrl,
+                                embedMapsUrl: newEmbed
+                              }
+                            }));
+                            setSaveToast(`Lokasi disamakan dengan ${ac.judul}!`);
+                            setTimeout(() => setSaveToast(null), 3000);
+                          }}
+                          className="text-[10px] px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-emerald-600 hover:text-emerald-800 text-slate-700 font-medium transition-colors cursor-pointer shadow-2xs"
+                        >
+                          📍 {ac.judul || `Acara ${aIdx + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Nama Tempat Utama */}
                   <div>
-                    <label className="block text-slate-600 font-medium mb-1">Tautan Google Maps</label>
+                    <label className="block text-slate-600 font-medium text-xs mb-1">Nama Tempat / Gedung untuk Peta</label>
+                    <input
+                      type="text"
+                      value={formData.lokasi.namaTempat}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const q = [val, formData.lokasi.alamatLengkap].filter(Boolean).join(' ').trim();
+                        setFormData(prev => ({
+                          ...prev,
+                          lokasi: {
+                            ...prev.lokasi,
+                            namaTempat: val,
+                            embedMapsUrl: q ? `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : prev.lokasi.embedMapsUrl
+                          }
+                        }));
+                      }}
+                      placeholder="Cth: Hotel Horison Tasikmalaya"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                    />
+                  </div>
+
+                  {/* Alamat Lengkap */}
+                  <div>
+                    <label className="block text-slate-600 font-medium text-xs mb-1">Alamat Lengkap untuk Navigasi</label>
+                    <textarea
+                      rows={2}
+                      value={formData.lokasi.alamatLengkap}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const q = [formData.lokasi.namaTempat, val].filter(Boolean).join(' ').trim();
+                        setFormData(prev => ({
+                          ...prev,
+                          lokasi: {
+                            ...prev.lokasi,
+                            alamatLengkap: val,
+                            embedMapsUrl: q ? `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : prev.lokasi.embedMapsUrl
+                          }
+                        }));
+                      }}
+                      placeholder="Cth: Jl. Yudanegara No.63, Yudanagara, Kec. Cihideung, Kota Tasikmalaya, Jawa Barat"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs"
+                    />
+                  </div>
+
+                  {/* Tautan Google Maps */}
+                  <div>
+                    <label className="block text-slate-600 font-medium text-xs mb-1">Tautan Google Maps (Tombol "Buka di Google Maps")</label>
                     <input
                       type="text"
                       value={formData.lokasi.googleMapsUrl}
-                      onChange={e => setFormData({
-                        ...formData,
-                        lokasi: { ...formData.lokasi, googleMapsUrl: e.target.value }
-                      })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
+                      onChange={e => {
+                        let val = e.target.value.trim();
+                        // If user pastes an iframe tag instead of a link, extract the src!
+                        if (val.includes('<iframe') && val.includes('src=')) {
+                          const match = val.match(/src=["']([^"']+)["']/);
+                          if (match && match[1]) {
+                            val = match[1];
+                          }
+                        }
+                        setFormData(prev => ({
+                          ...prev,
+                          lokasi: {
+                            ...prev.lokasi,
+                            googleMapsUrl: val
+                          }
+                        }));
+                      }}
+                      placeholder="Cth: https://maps.app.goo.gl/... atau https://maps.google.com/..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Tautan yang akan dibuka saat tamu menekan tombol <em>"Buka di Google Maps"</em>.
+                    </p>
                   </div>
                 </div>
               </div>
