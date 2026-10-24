@@ -109,7 +109,10 @@ export interface WeddingConfig {
     enabled: boolean;
     deskripsi: string;
     fotoList: string[];
-    videoUrl?: string;
+    videoEnabled?: boolean;
+    videoUrl?: string; // YouTube watch/shorts/embed, Vimeo, or direct MP4 link
+    videoJudul?: string;
+    videoDeskripsi?: string;
   };
   
   // Lokasi & Navigasi
@@ -147,6 +150,9 @@ export interface WeddingConfig {
     judulLagu: string;
     artis: string;
     audioUrl: string;
+    volume?: number; // 0 to 1
+    loop?: boolean;
+    isCustomUpload?: boolean;
   };
   
   // Tema & Gaya
@@ -166,6 +172,36 @@ export interface WeddingConfig {
     efekPartikel?: 'none' | 'petals' | 'sparkles' | 'stars' | 'balloons';
     suaraKertas?: boolean;
   };
+  
+  // Tata Letak & Frame Styling
+  tataLetak?: LayoutConfig;
+
+  // Dekorasi & Ornamen Kustom / Preset
+  ornamenConfig?: OrnamenConfig;
+}
+
+export interface OrnamenConfig {
+  gayaSudut?: 'botanical-leaves' | 'gold-vintage' | 'islamic-arabesque' | 'minimal-modern' | 'none';
+  gayaPemisah?: 'gold-filigree' | 'leaf-vine' | 'bismillah-calligraphy' | 'clean-line' | 'none';
+  customOrnamenUrl?: string;
+  posisiCustom?: 'sudut-atas' | 'pembatas' | 'floating';
+  ukuranOrnamen?: number; // 30 to 140px
+  opasitasOrnamen?: number; // 20 to 100%
+}
+
+export interface LayoutConfig {
+  // Pengaturan Sampul (Cover greeting box & CTA button position)
+  posisiKotakSampul?: 'bawah' | 'tengah-bawah' | 'tengah' | 'bawah-ekstra';
+  geserVertikalKotakSampul?: number; // slider -150px to +150px
+  gayaKotakSampul?: 'frosted-glass' | 'clean-white' | 'gold-border' | 'minimal-transparent' | 'dark-glass';
+  
+  // Pengaturan Frame Foto Mempelai / Profil (Photo collage styling)
+  bentukFrameFoto?: 'circle' | 'arch' | 'arch-double' | 'squircle' | 'oval' | 'diamond' | 'hexagon' | 'scallop' | 'polaroid' | 'blob';
+  ukuranFotoMempelai?: 'sm' | 'md' | 'lg' | 'xl' | 'custom';
+  ukuranFotoKustom?: number; // 90 to 220px
+  gayaBorderFoto?: 'gold-ring' | 'double-ring' | 'dashed-vintage' | 'subtle-shadow' | 'floral-accent' | 'none';
+  posisiFokusFoto?: 'center' | 'top' | 'bottom';
+  geserVertikalFoto?: number; // -40px to +40px
 }
 
 export interface WeddingProject {
