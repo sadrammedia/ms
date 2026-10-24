@@ -16,7 +16,8 @@ import {
   BookOpen,
   ArrowRight,
   Cake,
-  ExternalLink
+  ExternalLink,
+  Video
 } from 'lucide-react';
 import { WeddingProject, GuestbookEntry } from '../types/wedding';
 import { submitRsvpWish } from '../services/firebase';
@@ -31,6 +32,8 @@ import {
   BirthdayCrown
 } from './BotanicalDecorations';
 import { playRealisticPaperSound } from '../utils/audioEffects';
+import { getPhotoFrameStyles } from '../utils/frameStyles';
+import { parseVideoUrl } from '../utils/videoHelper';
 
 interface FlipbookReaderProps {
   project: WeddingProject;
@@ -115,6 +118,9 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
   const paperTexture = config.tema?.teksturKertas || 'vintage-parchment';
   const visualStyle = config.tema?.styleTampilan || (isKhitan ? 'islamic-arch' : isBirthday ? 'festive-birthday' : 'classic-botanical');
   const fontJudul = config.tema?.fontJudul || (isKhitan ? 'Playfair Display' : 'Great Vibes');
+
+  // Photo frame styling for profile pictures
+  const photoFrameStyles = getPhotoFrameStyles(config.tataLetak, accentColor);
 
   const getTitleFontClass = () => {
     switch (fontJudul) {
@@ -469,12 +475,21 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
                   <div className="space-y-4 my-auto">
                     {/* Groom */}
                     <div className="flex items-center gap-3 bg-white/70 p-3 rounded-2xl border border-stone-200/80 shadow-2xs">
-                      <img 
-                        src={config.pria.foto} 
-                        alt={config.pria.namaLengkap} 
-                        className="w-16 h-16 rounded-full object-cover border-2 shadow-xs shrink-0"
-                        style={{ borderColor: accentColor }}
-                      />
+                      <div 
+                        className="w-16 h-16 shrink-0 overflow-hidden relative shadow-xs"
+                        style={{
+                          borderRadius: photoFrameStyles.imgStyle.borderRadius,
+                          clipPath: photoFrameStyles.imgStyle.clipPath,
+                          border: `2px solid ${accentColor}`
+                        }}
+                      >
+                        <img 
+                          src={config.pria.foto} 
+                          alt={config.pria.namaLengkap} 
+                          className={photoFrameStyles.imgClass}
+                          style={photoFrameStyles.imgStyle}
+                        />
+                      </div>
                       <div className="text-left flex-1 min-w-0">
                         <h3 className="font-serif font-bold text-sm text-slate-900 truncate">
                           {config.pria.namaLengkap}
@@ -496,12 +511,21 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
 
                     {/* Bride */}
                     <div className="flex items-center gap-3 bg-white/70 p-3 rounded-2xl border border-stone-200/80 shadow-2xs">
-                      <img 
-                        src={config.wanita.foto} 
-                        alt={config.wanita.namaLengkap} 
-                        className="w-16 h-16 rounded-full object-cover border-2 shadow-xs shrink-0"
-                        style={{ borderColor: accentColor }}
-                      />
+                      <div 
+                        className="w-16 h-16 shrink-0 overflow-hidden relative shadow-xs"
+                        style={{
+                          borderRadius: photoFrameStyles.imgStyle.borderRadius,
+                          clipPath: photoFrameStyles.imgStyle.clipPath,
+                          border: `2px solid ${accentColor}`
+                        }}
+                      >
+                        <img 
+                          src={config.wanita.foto} 
+                          alt={config.wanita.namaLengkap} 
+                          className={photoFrameStyles.imgClass}
+                          style={photoFrameStyles.imgStyle}
+                        />
+                      </div>
                       <div className="text-left flex-1 min-w-0">
                         <h3 className="font-serif font-bold text-sm text-slate-900 truncate">
                           {config.wanita.namaLengkap}
@@ -674,13 +698,42 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
                   </p>
                 </div>
 
+                {/* Video Teaser Embed in Book if Enabled */}
+                {config.galeri.videoEnabled && config.galeri.videoUrl && (() => {
+                  const videoData = parseVideoUrl(config.galeri.videoUrl);
+                  if (!videoData.isValid) return null;
+                  return (
+                    <div className="mb-3 p-2 bg-white rounded-xl border border-stone-200/90 shadow-2xs">
+                      <div className="flex items-center gap-1.5 mb-1.5 px-1">
+                        <Video className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                        <span className="font-serif font-bold text-[11px] truncate text-slate-800">
+                          {config.galeri.videoJudul || 'Video Teaser Sinematik'}
+                        </span>
+                      </div>
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow-inner">
+                        {videoData.type === 'direct' ? (
+                          <video src={videoData.embedUrl} controls playsInline className="w-full h-full object-contain" />
+                        ) : (
+                          <iframe
+                            src={videoData.embedUrl}
+                            title="Video"
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Photos Grid Styled like a Photo Scrapbook Page */}
-                <div className="grid grid-cols-2 gap-2.5 my-auto max-h-[380px] overflow-y-auto custom-scrollbar p-1">
+                <div className="grid grid-cols-2 gap-2 my-auto max-h-[300px] overflow-y-auto custom-scrollbar p-1">
                   {config.galeri.fotoList.map((foto, idx) => (
                     <div 
                       key={idx}
                       onClick={() => onOpenLightbox(idx)}
-                      className="bg-white p-1.5 pb-3 rounded-xl border border-stone-200 shadow-2xs hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer group"
+                      className="bg-white p-1.5 pb-2 rounded-xl border border-stone-200 shadow-2xs hover:shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer group"
                       style={{
                         transform: idx % 2 === 0 ? 'rotate(-1deg)' : 'rotate(1.2deg)'
                       }}
