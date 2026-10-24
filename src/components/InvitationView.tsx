@@ -20,7 +20,9 @@ import {
   Gift,
   ArrowRight,
   Sparkles,
-  Cake
+  Cake,
+  Video,
+  Play
 } from 'lucide-react';
 import { WeddingProject, GuestbookEntry } from '../types/wedding';
 import { submitRsvpWish, subscribeToGuestbook } from '../services/firebase';
@@ -39,6 +41,8 @@ import { LightboxModal } from './LightboxModal';
 import { ShareModal } from './ShareModal';
 import { FlipbookReader } from './FlipbookReader';
 import { FloatingParticles } from './FloatingParticles';
+import { getCoverGreetingBoxStyles, getPhotoFrameStyles } from '../utils/frameStyles';
+import { parseVideoUrl } from '../utils/videoHelper';
 
 interface InvitationViewProps {
   project: WeddingProject;
@@ -80,6 +84,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
   const visualStyle = config.tema?.styleTampilan || (isKhitan ? 'islamic-arch' : isBirthday ? 'festive-birthday' : 'classic-botanical');
   const fontJudul = config.tema?.fontJudul || (isKhitan ? 'Playfair Display' : 'Great Vibes');
 
+  // Dynamic layout & frame styling
+  const coverBoxStyles = getCoverGreetingBoxStyles(config.tataLetak, primaryColor, accentColor);
+  const photoFrameStyles = getPhotoFrameStyles(config.tataLetak, accentColor);
+
   // Helper for title typography
   const getTitleFontClass = () => {
     switch (fontJudul) {
@@ -120,6 +128,17 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
 
   // Audio ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Sync audio source & volume dynamically when config updates
+  useEffect(() => {
+    if (audioRef.current && config.musik?.audioUrl) {
+      audioRef.current.src = config.musik.audioUrl;
+      audioRef.current.volume = config.musik.volume ?? 0.7;
+      if (isPlayingMusic) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
+  }, [config.musik?.audioUrl, config.musik?.volume]);
 
   // Initialize guest name from URL if provided
   useEffect(() => {
@@ -613,32 +632,38 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-[11px] text-slate-600 mt-0.5">{config.lokasi.alamatLengkap}</p>
             </div>
 
-            {/* Guest Greeting */}
+            {/* Guest Greeting & CTA Button Container (Adjustable position & vertical offset) */}
             <div 
-              className="bg-white/85 backdrop-blur-md rounded-2xl py-2.5 px-4 max-w-xs mx-auto shadow-xs mb-4 border"
-              style={{ borderColor: `${accentColor}40` }}
+              className="w-full flex flex-col items-center"
+              style={coverBoxStyles.wrapperStyle}
             >
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-sans">Kepada Yth. Bapak/Ibu/Saudara/i:</p>
-              <h2 
-                className="text-sm font-semibold mt-0.5 font-serif"
-                style={{ color: primaryColor }}
+              {/* Guest Greeting Card */}
+              <div 
+                className={coverBoxStyles.cardClass}
+                style={coverBoxStyles.cardStyle}
               >
-                {guestName}
-              </h2>
-            </div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-sans">Kepada Yth. Bapak/Ibu/Saudara/i:</p>
+                <h2 
+                  className="text-sm font-semibold mt-0.5 font-serif"
+                  style={{ color: primaryColor }}
+                >
+                  {guestName}
+                </h2>
+              </div>
 
-            {/* CTA Button */}
-            <button
-              onClick={handleOpenInvitation}
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-medium text-xs md:text-sm tracking-wide shadow-xl transition-all transform hover:scale-105 active:scale-95 group cursor-pointer"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <span>{config.teksTombol || (isKhitan ? 'Konfirmasi Kehadiran' : isBirthday ? 'RSVP Sekarang' : 'Buka Undangan')}</span>
-              <ArrowRight 
-                className="w-4 h-4 group-hover:translate-x-1 transition-transform" 
-                style={{ color: accentColor }}
-              />
-            </button>
+              {/* CTA Button */}
+              <button
+                onClick={handleOpenInvitation}
+                className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full text-white font-medium text-xs md:text-sm tracking-wide shadow-xl transition-all transform hover:scale-105 active:scale-95 group cursor-pointer"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <span>{config.teksTombol || (isKhitan ? 'Konfirmasi Kehadiran' : isBirthday ? 'RSVP Sekarang' : 'Buka Undangan')}</span>
+                <ArrowRight 
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform" 
+                  style={{ color: accentColor }}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Bottom couple scenic area & interactive scroll prompt */}
@@ -828,14 +853,20 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                   {/* Groom */}
                   <div className="flex flex-col items-center">
                     <div 
-                      className="relative w-28 h-28 md:w-32 md:h-32 rounded-full p-1 border-2 shadow-md mb-3 overflow-hidden bg-slate-100"
-                      style={{ borderColor: accentColor }}
+                      className={photoFrameStyles.containerClass}
+                      style={photoFrameStyles.containerStyle}
                     >
                       <img
                         src={config.pria.foto}
                         alt={config.pria.namaLengkap}
-                        className="w-full h-full rounded-full object-cover object-top hover:scale-105 transition-transform duration-500"
+                        className={photoFrameStyles.imgClass}
+                        style={photoFrameStyles.imgStyle}
                       />
+                      {photoFrameStyles.isPolaroid && (
+                        <span className="block text-[10px] font-serif text-slate-700 mt-1 truncate max-w-full text-center font-medium">
+                          {config.pria.namaPanggilan}
+                        </span>
+                      )}
                     </div>
                     <h3 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
                       {config.pria.namaLengkap}
@@ -855,14 +886,20 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                   {/* Bride */}
                   <div className="flex flex-col items-center">
                     <div 
-                      className="relative w-28 h-28 md:w-32 md:h-32 rounded-full p-1 border-2 shadow-md mb-3 overflow-hidden bg-slate-100"
-                      style={{ borderColor: accentColor }}
+                      className={photoFrameStyles.containerClass}
+                      style={photoFrameStyles.containerStyle}
                     >
                       <img
                         src={config.wanita.foto}
                         alt={config.wanita.namaLengkap}
-                        className="w-full h-full rounded-full object-cover object-top hover:scale-105 transition-transform duration-500"
+                        className={photoFrameStyles.imgClass}
+                        style={photoFrameStyles.imgStyle}
                       />
+                      {photoFrameStyles.isPolaroid && (
+                        <span className="block text-[10px] font-serif text-slate-700 mt-1 truncate max-w-full text-center font-medium">
+                          {config.wanita.namaPanggilan}
+                        </span>
+                      )}
                     </div>
                     <h3 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
                       {config.wanita.namaLengkap}
@@ -1054,11 +1091,62 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                 Momen Bahagia
               </p>
               <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
-                Galeri Foto
+                Galeri & Video
               </h2>
               <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
                 {config.galeri.deskripsi}
               </p>
+
+              {/* Video Teaser / Sinematik Player (Jika diaktifkan) */}
+              {config.galeri.videoEnabled && config.galeri.videoUrl && (() => {
+                const videoData = parseVideoUrl(config.galeri.videoUrl);
+                if (!videoData.isValid) return null;
+                return (
+                  <div 
+                    className="mb-8 p-3 sm:p-4 bg-white/95 rounded-3xl border shadow-md text-left transition-all"
+                    style={{ borderColor: `${accentColor}40` }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white shadow-xs shrink-0" 
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <Video className="w-4 h-4 text-amber-200" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-serif font-bold text-xs sm:text-sm text-slate-900 truncate">
+                          {config.galeri.videoJudul || 'Video Teaser Momen Spesial'}
+                        </h4>
+                        {config.galeri.videoDeskripsi ? (
+                          <p className="text-[10px] text-slate-500 line-clamp-1">{config.galeri.videoDeskripsi}</p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400">Putar video kenangan indah di bawah ini</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 shadow-inner border border-slate-200/80">
+                      {videoData.type === 'direct' ? (
+                        <video 
+                          src={videoData.embedUrl} 
+                          controls 
+                          playsInline 
+                          preload="metadata"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <iframe
+                          src={videoData.embedUrl}
+                          title={config.galeri.videoJudul || 'Video Undangan'}
+                          className="w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 2x2 Photo Grid */}
               <div className="grid grid-cols-2 gap-3 mb-6">
