@@ -20,7 +20,7 @@ export const AUDIO_PRESETS: AudioPreset[] = [
     artis: 'Johann Pachelbel (Acoustic Arr.)',
     kategori: 'pernikahan',
     durasi: '3:20',
-    url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=romantic-piano-10777.mp3',
+    url: '/audio/canon-in-d.mp3',
     deskripsi: 'Alunan piano lembut klasik paling populer untuk prosesi akad dan resepsi pernikahan'
   },
   {
@@ -29,7 +29,7 @@ export const AUDIO_PRESETS: AudioPreset[] = [
     artis: 'Acoustic Morning Melody',
     kategori: 'pernikahan',
     durasi: '2:45',
-    url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c07e0e7a.mp3?filename=acoustic-guitars-ambient-uplifting-112189.mp3',
+    url: '/audio/acoustic-wedding.mp3',
     deskripsi: 'Petikan gitar akustik hangat dan menenangkan dengan nuansa romantis syahdu'
   },
   {
@@ -38,16 +38,16 @@ export const AUDIO_PRESETS: AudioPreset[] = [
     artis: 'Melodic Symphony',
     kategori: 'pernikahan',
     durasi: '3:10',
-    url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=inspiring-emotional-uplifting-piano-112623.mp3',
+    url: '/audio/thousand-moments.mp3',
     deskripsi: 'Sentuhan instrumen gesek biola dan piano yang megah, elegan, dan emosional'
   },
   {
     id: 'islamic-peaceful-khitan',
     judul: 'Kedamaian Hati (Syahdu Flute & Gambus)',
-    artis: 'Spiritual Heritage Instrumental',
+    artis: 'ForestMusic (This Ramadan Instrumental)',
     kategori: 'khitan',
     durasi: '2:55',
-    url: 'https://cdn.pixabay.com/download/audio/2021/09/06/audio_84534ef734.mp3?filename=ramadan-peaceful-middle-east-9457.mp3',
+    url: '/audio/syahdu-khitan.mp3',
     deskripsi: 'Irama seruling dan petikan gambus khas Timur Tengah yang tenang dan berkah'
   },
   {
@@ -56,16 +56,16 @@ export const AUDIO_PRESETS: AudioPreset[] = [
     artis: 'Sunlit Children Celebration',
     kategori: 'ulang-tahun',
     durasi: '2:15',
-    url: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=happy-acoustic-guitar-cheerful-123447.mp3',
+    url: '/audio/happy-birthday.mp3',
     deskripsi: 'Melodi riang, ceria, dan penuh kebahagiaan untuk pesta ulang tahun anak atau remaja'
   },
   {
     id: 'lofi-cozy-wedding',
     judul: 'Sunset Romance (Lofi Chill Beat)',
-    artis: 'Lofi Cafe Studio',
+    artis: 'Muza Production (Cafe Bagdad)',
     kategori: 'umum',
     durasi: '2:30',
-    url: 'https://cdn.pixabay.com/download/audio/2022/04/27/audio_097e16d0be.mp3?filename=lofi-study-112191.mp3',
+    url: '/audio/lofi-wedding.mp3',
     deskripsi: 'Beat santai modern aesthetic yang kekinian dan tidak membosankan'
   }
 ];
