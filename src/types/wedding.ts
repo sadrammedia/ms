@@ -165,6 +165,13 @@ export interface WeddingConfig {
     warnaKartu?: string; // Card background
     fontJudul: string;
     fontIsi: string;
+    fontJudulSection?: string;
+    fontNamaProfil?: string;
+    ukuranJudulSection?: 'sm' | 'md' | 'lg' | 'xl';
+    ukuranNamaProfil?: 'sm' | 'md' | 'lg' | 'xl';
+    tebalNamaProfil?: boolean;
+    miringNamaProfil?: boolean;
+    warnaNamaProfil?: string;
     ornamen: string;
     styleTampilan?: 'classic-botanical' | 'modern-clean' | 'luxury-gold' | 'romantic-floral' | 'islamic-arch' | 'festive-birthday';
     modeNavigasi?: 'scroll' | 'flipbook';
@@ -202,6 +209,31 @@ export interface LayoutConfig {
   gayaBorderFoto?: 'gold-ring' | 'double-ring' | 'dashed-vintage' | 'subtle-shadow' | 'floral-accent' | 'none';
   posisiFokusFoto?: 'center' | 'top' | 'bottom';
   geserVertikalFoto?: number; // -40px to +40px
+  
+  // Gaya & Tipografi Teks Sampul (Warna, Ukuran, Tebal, Shadow)
+  gayaTeksSampul?: CoverTextStyleConfig;
+}
+
+export interface CoverTextStyleConfig {
+  // 1. Teks Kalimat Pengantar / Subjudul (Tanda Kurung Merah Tengah)
+  subJudulWarna?: string;
+  subJudulUkuran?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+  subJudulBold?: boolean;
+  subJudulItalic?: boolean;
+  subJudulShadow?: boolean;
+  subJudulAlign?: 'left' | 'center' | 'right';
+
+  // 2. Nama Pengantin / Judul Mempelai (Tanda Kurung Merah Atas)
+  judulWarna?: string;
+  judulUkuran?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  judulBold?: boolean;
+  judulShadow?: boolean;
+
+  // 3. Info Tanggal & Lokasi (Tanda Kurung Merah Bawah)
+  infoWarna?: string;
+  infoUkuran?: 'xs' | 'sm' | 'base';
+  infoBold?: boolean;
+  infoShadow?: boolean;
 }
 
 export interface WeddingProject {
