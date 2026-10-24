@@ -120,7 +120,10 @@ export const defaultWeddingConfig: WeddingConfig = {
       'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80'
     ],
-    videoUrl: ''
+    videoEnabled: true,
+    videoUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+    videoJudul: 'Teaser Prewedding Sinematik',
+    videoDeskripsi: 'Sekilas kilas balik perjalanan cinta kami menuju ikatan suci pernikahan.'
   },
   
   lokasi: {
@@ -183,6 +186,17 @@ export const defaultWeddingConfig: WeddingConfig = {
     teksturKertas: 'vintage-parchment',
     efekPartikel: 'petals',
     suaraKertas: true
+  },
+  tataLetak: {
+    posisiKotakSampul: 'bawah',
+    geserVertikalKotakSampul: 0,
+    gayaKotakSampul: 'frosted-glass',
+    bentukFrameFoto: 'circle',
+    ukuranFotoMempelai: 'md',
+    ukuranFotoKustom: 130,
+    gayaBorderFoto: 'gold-ring',
+    posisiFokusFoto: 'top',
+    geserVertikalFoto: 0
   }
 };
 
@@ -284,7 +298,10 @@ export const defaultKhitanConfig: WeddingConfig = {
       'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=800&q=80'
-    ]
+    ],
+    videoEnabled: false,
+    videoUrl: '',
+    videoJudul: 'Video Momen Kebahagiaan Ananda'
   },
   
   lokasi: {
