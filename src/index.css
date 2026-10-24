@@ -16,6 +16,15 @@
   .font-cinzel {
     font-family: 'Cinzel', serif;
   }
+  .font-garamond {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+  .font-montserrat {
+    font-family: 'Montserrat', sans-serif;
+  }
+  .font-marcellus {
+    font-family: 'Marcellus', serif;
+  }
 }
 
 /* Botanical Watercolor & Parchment subtle backgrounds */
