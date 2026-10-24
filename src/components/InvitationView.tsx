@@ -28,6 +28,8 @@ import { WeddingProject, GuestbookEntry } from '../types/wedding';
 import { submitRsvpWish, subscribeToGuestbook } from '../services/firebase';
 import { 
   BotanicalCorner, 
+  DynamicCornerOrnament,
+  DynamicDivider,
   GoldFloralDivider, 
   ModernDivider, 
   BotanicalSwag,
@@ -41,7 +43,7 @@ import { LightboxModal } from './LightboxModal';
 import { ShareModal } from './ShareModal';
 import { FlipbookReader } from './FlipbookReader';
 import { FloatingParticles } from './FloatingParticles';
-import { getCoverGreetingBoxStyles, getPhotoFrameStyles } from '../utils/frameStyles';
+import { getCoverGreetingBoxStyles, getPhotoFrameStyles, getCoverTextStyles } from '../utils/frameStyles';
 import { parseVideoUrl } from '../utils/videoHelper';
 
 interface InvitationViewProps {
@@ -87,6 +89,7 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
   // Dynamic layout & frame styling
   const coverBoxStyles = getCoverGreetingBoxStyles(config.tataLetak, primaryColor, accentColor);
   const photoFrameStyles = getPhotoFrameStyles(config.tataLetak, accentColor);
+  const coverTextStyles = getCoverTextStyles(config.tataLetak, primaryColor);
 
   // Helper for title typography
   const getTitleFontClass = () => {
@@ -94,7 +97,65 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
       case 'Alex Brush': return 'font-alex';
       case 'Playfair Display': return 'font-serif font-bold';
       case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond';
+      case 'Montserrat': return 'font-montserrat font-bold tracking-wider';
+      case 'Marcellus': return 'font-marcellus tracking-wide';
+      case 'Plus Jakarta Sans': return 'font-sans font-bold';
       default: return 'font-script';
+    }
+  };
+
+  // Helper for Section Titles ("Tentang Kami", "Kisah Kami", dll. - Sesuai Gambar Lampiran)
+  const getSectionTitleFontClass = () => {
+    const font = config.tema?.fontJudulSection || config.tema?.fontJudul || 'Playfair Display';
+    switch (font) {
+      case 'Alex Brush': return 'font-alex';
+      case 'Great Vibes': return 'font-script';
+      case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond font-semibold';
+      case 'Montserrat': return 'font-montserrat font-bold tracking-wide uppercase';
+      case 'Marcellus': return 'font-marcellus tracking-wide';
+      case 'Plus Jakarta Sans': return 'font-sans font-bold';
+      case 'Playfair Display':
+      default: return 'font-serif font-semibold';
+    }
+  };
+
+  const getSectionTitleSizeClass = () => {
+    const size = config.tema?.ukuranJudulSection || 'lg';
+    switch (size) {
+      case 'sm': return 'text-xl sm:text-2xl';
+      case 'md': return 'text-2xl sm:text-3xl';
+      case 'xl': return 'text-4xl sm:text-5xl';
+      case 'lg':
+      default: return 'text-3xl sm:text-4xl';
+    }
+  };
+
+  // Helper for Profile Couple Names ("Mardas Lobel Atafat, ST" & "Sari Apriliani" - Sesuai Gambar Lampiran)
+  const getProfileNameFontClass = () => {
+    const font = config.tema?.fontNamaProfil || 'Playfair Display';
+    switch (font) {
+      case 'Alex Brush': return 'font-alex text-lg sm:text-xl';
+      case 'Great Vibes': return 'font-script text-xl sm:text-2xl';
+      case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond text-base sm:text-lg';
+      case 'Montserrat': return 'font-montserrat tracking-wide';
+      case 'Marcellus': return 'font-marcellus';
+      case 'Plus Jakarta Sans': return 'font-sans';
+      case 'Playfair Display':
+      default: return 'font-serif';
+    }
+  };
+
+  const getProfileNameSizeClass = () => {
+    const size = config.tema?.ukuranNamaProfil || 'md';
+    switch (size) {
+      case 'sm': return 'text-xs sm:text-sm';
+      case 'lg': return 'text-base sm:text-lg';
+      case 'xl': return 'text-lg sm:text-xl';
+      case 'md':
+      default: return 'text-sm sm:text-base';
     }
   };
 
@@ -462,12 +523,20 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             <BirthdayPartyBalloons position="right" />
           </>
         ) : (
-          visualStyle !== 'modern-clean' && (
-            <>
-              <BotanicalCorner position="top-left" />
-              <BotanicalCorner position="top-right" />
-            </>
-          )
+          <>
+            <DynamicCornerOrnament 
+              position="top-left" 
+              gayaSudut={config.ornamenConfig?.gayaSudut} 
+              customUrl={config.ornamenConfig?.customOrnamenUrl}
+              color={accentColor}
+            />
+            <DynamicCornerOrnament 
+              position="top-right" 
+              gayaSudut={config.ornamenConfig?.gayaSudut} 
+              customUrl={config.ornamenConfig?.customOrnamenUrl}
+              color={accentColor}
+            />
+          </>
         )}
 
         {/* Main invitation card container */}
@@ -531,22 +600,25 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                 </p>
 
                 <h1 
-                  className={`${getTitleFontClass()} text-5xl md:text-6xl mb-1 font-normal tracking-wide drop-shadow-xs`}
-                  style={{ color: primaryColor }}
+                  className={`${getTitleFontClass()} ${coverTextStyles.judulSizeClass} mb-1 font-normal tracking-wide transition-all`}
+                  style={coverTextStyles.judulStyle}
                 >
                   {project.mempelai}
                 </h1>
 
-                {visualStyle === 'modern-clean' ? (
-                  <ModernDivider className="my-2" color={primaryColor} />
-                ) : (
-                  <GoldFloralDivider className="my-2" color={accentColor} />
-                )}
+                <DynamicDivider 
+                  gayaPemisah={config.ornamenConfig?.gayaPemisah} 
+                  color={accentColor} 
+                  className="my-2" 
+                />
               </div>
             )}
 
-            {/* Subtitle invitation quote */}
-            <p className="text-xs md:text-sm text-slate-700 max-w-xs mx-auto leading-relaxed mt-2 font-serif">
+            {/* Subtitle invitation quote (tanda kurung merah tengah) */}
+            <p 
+              className={`${coverTextStyles.subJudulSizeClass} max-w-xs mx-auto leading-relaxed mt-2 font-serif transition-all`}
+              style={coverTextStyles.subJudulStyle}
+            >
               {config.subJudulSampul}
             </p>
 
@@ -623,13 +695,16 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               </div>
             )}
 
-            {/* Venue snippet */}
-            <div className="text-xs text-slate-700 font-serif mb-3">
-              <p className="font-semibold text-slate-900 flex items-center justify-center gap-1">
+            {/* Venue snippet (tanda kurung merah bawah) */}
+            <div 
+              className={`${coverTextStyles.infoSizeClass} font-serif mb-3 transition-all`}
+              style={coverTextStyles.infoStyle}
+            >
+              <p className="font-semibold flex items-center justify-center gap-1">
                 <MapPin className="w-3.5 h-3.5" style={{ color: accentColor }} />
                 <span>{config.lokasi.namaTempat}</span>
               </p>
-              <p className="text-[11px] text-slate-600 mt-0.5">{config.lokasi.alamatLengkap}</p>
+              <p className="mt-0.5 opacity-90">{config.lokasi.alamatLengkap}</p>
             </div>
 
             {/* Guest Greeting & CTA Button Container (Adjustable position & vertical offset) */}
@@ -740,8 +815,14 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             className="relative py-12 px-6 text-center border-b overflow-hidden"
             style={{ borderColor: `${accentColor}20` }}
           >
-            {isWedding && visualStyle !== 'modern-clean' && (
-              <BotanicalCorner position="top-right" className="opacity-35" />
+            {isWedding && (
+              <DynamicCornerOrnament 
+                position="top-right" 
+                gayaSudut={config.ornamenConfig?.gayaSudut} 
+                customUrl={config.ornamenConfig?.customOrnamenUrl}
+                color={accentColor}
+                className="opacity-35" 
+              />
             )}
 
             {isKhitan ? (
@@ -842,7 +923,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                 <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                   Pasangan Mempelai
                 </p>
-                <h2 className="font-serif text-3xl font-semibold mb-3" style={{ color: primaryColor }}>
+                <h2 
+                  className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-3 transition-all`} 
+                  style={{ color: primaryColor }}
+                >
                   Tentang Kami
                 </h2>
                 <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-8">
@@ -868,7 +952,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                         </span>
                       )}
                     </div>
-                    <h3 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
+                    <h3 
+                      className={`${getProfileNameFontClass()} ${getProfileNameSizeClass()} ${config.tema?.tebalNamaProfil ?? true ? 'font-bold' : 'font-normal'} ${config.tema?.miringNamaProfil ? 'italic' : ''} transition-all`} 
+                      style={{ color: config.tema?.warnaNamaProfil || primaryColor }}
+                    >
                       {config.pria.namaLengkap}
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-1 leading-snug">
@@ -901,7 +988,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                         </span>
                       )}
                     </div>
-                    <h3 className="font-serif font-bold text-sm" style={{ color: primaryColor }}>
+                    <h3 
+                      className={`${getProfileNameFontClass()} ${getProfileNameSizeClass()} ${config.tema?.tebalNamaProfil ?? true ? 'font-bold' : 'font-normal'} ${config.tema?.miringNamaProfil ? 'italic' : ''} transition-all`} 
+                      style={{ color: config.tema?.warnaNamaProfil || primaryColor }}
+                    >
                       {config.wanita.namaLengkap}
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-1 leading-snug">
@@ -917,11 +1007,11 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
                   </div>
                 </div>
 
-                {visualStyle === 'modern-clean' ? (
-                  <ModernDivider className="my-4" color={primaryColor} />
-                ) : (
-                  <GoldFloralDivider className="my-4" color={accentColor} />
-                )}
+                <DynamicDivider 
+                  gayaPemisah={config.ornamenConfig?.gayaPemisah} 
+                  color={accentColor} 
+                  className="my-4" 
+                />
                 
                 <p className="italic font-serif text-xs text-slate-600 max-w-xs mx-auto">
                   {config.kutipanAkhir}
@@ -942,7 +1032,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                 Perjalanan Cinta
               </p>
-              <h2 className="font-serif text-2xl font-semibold mb-6" style={{ color: primaryColor }}>
+              <h2 
+                className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-6 transition-all`} 
+                style={{ color: primaryColor }}
+              >
                 Kisah Kami
               </h2>
               
@@ -981,7 +1074,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
               Waktu & Tempat
             </p>
-            <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+            <h2 
+              className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+              style={{ color: primaryColor }}
+            >
               {isBirthday ? 'Jadwal Pesta' : isKhitan ? 'Rangkaian Tasyakuran' : 'Rangkaian Acara'}
             </h2>
             <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
@@ -1090,7 +1186,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                 Momen Bahagia
               </p>
-              <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+              <h2 
+                className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+                style={{ color: primaryColor }}
+              >
                 Galeri & Video
               </h2>
               <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
@@ -1196,7 +1295,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                 Kehadiran
               </p>
-              <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+              <h2 
+                className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+                style={{ color: primaryColor }}
+              >
                 Konfirmasi Kehadiran
               </h2>
               <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
@@ -1297,7 +1399,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                 Buku Tamu
               </p>
-              <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+              <h2 
+                className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+                style={{ color: primaryColor }}
+              >
                 Doa & Ucapan
               </h2>
               <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
@@ -1380,7 +1485,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
             <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
               Peta & Arah
             </p>
-            <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+            <h2 
+              className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+              style={{ color: primaryColor }}
+            >
               Lokasi & Navigasi
             </h2>
             <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
@@ -1482,7 +1590,10 @@ export const InvitationView: React.FC<InvitationViewProps> = ({
               <p className="text-xs uppercase tracking-[0.25em] font-medium mb-1" style={{ color: accentColor }}>
                 {isBirthday ? 'Hadiah & Wishlist' : 'Tanda Kasih'}
               </p>
-              <h2 className="font-serif text-3xl font-semibold mb-2" style={{ color: primaryColor }}>
+              <h2 
+                className={`${getSectionTitleFontClass()} ${getSectionTitleSizeClass()} mb-2 transition-all`} 
+                style={{ color: primaryColor }}
+              >
                 {isBirthday ? 'Kado Ulang Tahun' : isKhitan ? 'Kado Khitanan' : 'Amplop Digital'}
               </h2>
               <p className="text-xs text-slate-600 max-w-xs mx-auto font-serif leading-relaxed mb-6">
