@@ -24,6 +24,7 @@ import {
 } from 'firebase/auth';
 import { WeddingProject, WeddingConfig, GuestbookEntry, InvitationCategory } from '../types/wedding';
 import { defaultProjectsList, defaultWeddingConfig, defaultKhitanConfig, defaultBirthdayConfig } from '../data/defaultInvitations';
+import { sanitizeConfigForFirestore, measureDataSize } from '../utils/imageCompressor';
 
 // Firebase configuration from existing project
 const firebaseConfig = {
@@ -161,13 +162,14 @@ export async function fetchAllProjects(): Promise<WeddingProject[]> {
       const remoteList: WeddingProject[] = [];
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-        const shortId = 'MS-' + docSnap.id.substring(0, 7).toUpperCase();
+        const shortId = data.id || data.shortId || ('MS-' + docSnap.id.substring(0, 7).toUpperCase());
         
         // Merge with existing config if present or construct fallback
         const existingLocal = localList.find(p => p.id === docSnap.id || p.id === shortId);
         
         remoteList.push({
           id: shortId,
+          kategori: data.kategori || existingLocal?.kategori || 'pernikahan',
           mempelai: data.mempelai || 'Mempelai',
           tanggal: data.tanggal || 'Tanggal Acara',
           status: (data.status as 'Aktif' | 'Draf') || 'Aktif',
@@ -198,28 +200,23 @@ export async function fetchProjectById(idOrSlug: string): Promise<WeddingProject
   const cleanId = idOrSlug.trim();
   const localList = getLocalProjects();
 
-  // Try finding locally first
-  const match = localList.find(p => 
-    p.id.toLowerCase() === cleanId.toLowerCase() ||
-    p.config.slug.toLowerCase() === cleanId.toLowerCase() ||
-    p.id.replace('MS-', '').toLowerCase() === cleanId.toLowerCase()
-  );
-  if (match) return match;
-
-  // Try querying Firestore
+  // Try querying Firestore first so shared links / newly published updates are immediately live
   try {
     const q = query(collection(db, 'proyek_klien'));
     const snapshot = await getDocs(q);
     for (const docSnap of snapshot.docs) {
-      const shortId = 'MS-' + docSnap.id.substring(0, 7).toUpperCase();
       const data = docSnap.data();
+      const shortId = data.id || data.shortId || ('MS-' + docSnap.id.substring(0, 7).toUpperCase());
       if (
         shortId.toLowerCase() === cleanId.toLowerCase() ||
         docSnap.id.toLowerCase() === cleanId.toLowerCase() ||
+        (data.id && data.id.toLowerCase() === cleanId.toLowerCase()) ||
+        (data.shortId && data.shortId.toLowerCase() === cleanId.toLowerCase()) ||
         (data.config && data.config.slug && data.config.slug.toLowerCase() === cleanId.toLowerCase())
       ) {
-        return {
+        const foundProject: WeddingProject = {
           id: shortId,
+          kategori: data.kategori || data.config?.kategori || 'pernikahan',
           mempelai: data.mempelai,
           tanggal: data.tanggal,
           status: data.status || 'Aktif',
@@ -227,11 +224,30 @@ export async function fetchProjectById(idOrSlug: string): Promise<WeddingProject
           clientEmail: data.clientEmail,
           config: data.config || defaultWeddingConfig
         };
+
+        // Cache into local storage
+        const existingIdx = localList.findIndex(p => p.id === shortId);
+        if (existingIdx !== -1) {
+          localList[existingIdx] = foundProject;
+        } else {
+          localList.push(foundProject);
+        }
+        setLocalProjects(localList);
+
+        return foundProject;
       }
     }
   } catch (err) {
     console.warn('Firestore query error:', err);
   }
+
+  // Fallback to local storage if Firestore is unreachable
+  const match = localList.find(p => 
+    p.id.toLowerCase() === cleanId.toLowerCase() ||
+    p.config.slug.toLowerCase() === cleanId.toLowerCase() ||
+    p.id.replace('MS-', '').toLowerCase() === cleanId.toLowerCase()
+  );
+  if (match) return match;
 
   // Return the default project if requested standard default
   if (cleanId === 'MS-7B93E2A' || cleanId === 'raka-sinta' || cleanId === 'GLOBAL') {
@@ -271,7 +287,7 @@ export async function createNewProject(
     defaultTitle = `Birthday Party - ${mempelai}`;
   }
 
-  const newConfig: WeddingConfig = {
+  const rawConfig: WeddingConfig = {
     ...baseConfig,
     kategori,
     slug: slug || `${kategori}-${randomSuffix.toLowerCase()}`,
@@ -281,6 +297,9 @@ export async function createNewProject(
     ...(initialConfig || {})
   };
 
+  // Pre-sanitize config to ensure image sizes are strictly safe (< 1MB)
+  const sanitizedConfig = await sanitizeConfigForFirestore(rawConfig);
+
   const newProject: WeddingProject = {
     id: shortId,
     kategori,
@@ -289,22 +308,26 @@ export async function createNewProject(
     status: 'Draf',
     dibuatPada: new Date(),
     clientEmail: clientEmail || '',
-    config: newConfig
+    config: sanitizedConfig
   };
 
-  // Save to Firestore if available
+  // Save to Firestore with dedicated doc ID matching shortId
   try {
-    await addDoc(collection(db, 'proyek_klien'), {
+    const cleanDocId = shortId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    await setDoc(doc(db, 'proyek_klien', cleanDocId), {
+      id: shortId,
+      shortId: shortId,
       kategori,
       mempelai,
       tanggal,
       status: 'Draf',
       clientEmail: clientEmail || '',
-      config: newConfig,
-      dibuatPada: serverTimestamp()
+      config: sanitizedConfig,
+      dibuatPada: serverTimestamp(),
+      terakhirDiubah: serverTimestamp()
     });
   } catch (e) {
-    console.info('Saved locally (Firestore unavailable):', e);
+    console.warn('Saved locally (Firestore error):', e);
   }
 
   // Always save to local storage
@@ -314,34 +337,91 @@ export async function createNewProject(
 }
 
 /**
- * Update existing project
+ * Update existing project with size-safe Base64 compression and reliable Firestore upsert
  */
 export async function updateProject(
   projectId: string, 
   updates: Partial<WeddingProject>
 ): Promise<void> {
   const localList = getLocalProjects();
-  const index = localList.findIndex(p => p.id === projectId);
+  const index = localList.findIndex(p => 
+    p.id.toLowerCase() === projectId.toLowerCase() ||
+    p.config?.slug?.toLowerCase() === projectId.toLowerCase()
+  );
+
+  // 1. Sanitize config if provided to ensure no raw Base64 images exceed 1MB Firestore limit
+  let sanitizedUpdates = { ...updates };
+  if (sanitizedUpdates.config) {
+    const cleanConfig = await sanitizeConfigForFirestore(sanitizedUpdates.config);
+    // Keep date fields in sync
+    if (sanitizedUpdates.tanggal) {
+      cleanConfig.tanggalResmi = sanitizedUpdates.tanggal;
+      if (!cleanConfig.hariTanggalLengkap || cleanConfig.hariTanggalLengkap === cleanConfig.tanggalResmi) {
+        cleanConfig.hariTanggalLengkap = sanitizedUpdates.tanggal;
+      }
+    }
+    sanitizedUpdates.config = cleanConfig;
+  }
+
+  // 2. Save locally first for instant snappy response
   if (index !== -1) {
-    localList[index] = { ...localList[index], ...updates };
+    localList[index] = { 
+      ...localList[index], 
+      ...sanitizedUpdates,
+      config: sanitizedUpdates.config || localList[index].config
+    };
     setLocalProjects(localList);
   }
 
-  // Also update in Firestore
+  // 3. Update or Upsert in Firestore
   try {
     const q = query(collection(db, 'proyek_klien'));
     const snapshot = await getDocs(q);
-    snapshot.forEach(async (docSnap) => {
-      const shortId = 'MS-' + docSnap.id.substring(0, 7).toUpperCase();
-      if (shortId === projectId || docSnap.id === projectId) {
-        await updateDoc(doc(db, 'proyek_klien', docSnap.id), {
-          ...updates,
-          terakhirDiubah: serverTimestamp()
-        });
+    let matchedDocId: string | null = null;
+
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const shortId = data.id || data.shortId || ('MS-' + docSnap.id.substring(0, 7).toUpperCase());
+      if (
+        shortId.toLowerCase() === projectId.toLowerCase() || 
+        docSnap.id.toLowerCase() === projectId.toLowerCase() ||
+        (data.id && data.id.toLowerCase() === projectId.toLowerCase()) ||
+        (data.shortId && data.shortId.toLowerCase() === projectId.toLowerCase()) ||
+        (data.config?.slug && data.config.slug.toLowerCase() === projectId.toLowerCase())
+      ) {
+        matchedDocId = docSnap.id;
+        break;
       }
-    });
-  } catch (e) {
-    console.info('Synced locally:', e);
+    }
+
+    if (matchedDocId) {
+      await updateDoc(doc(db, 'proyek_klien', matchedDocId), {
+        ...sanitizedUpdates,
+        terakhirDiubah: serverTimestamp()
+      });
+      console.info(`Firestore document ${matchedDocId} updated successfully.`);
+    } else {
+      // Document didn't exist in Firestore yet (e.g. preset/default project edited for the first time)
+      // Upsert it so the published invitation link works universally on all devices!
+      const currentProj = index !== -1 ? localList[index] : null;
+      const cleanDocId = projectId.replace(/[^a-zA-Z0-9_-]/g, '_');
+      await setDoc(doc(db, 'proyek_klien', cleanDocId), {
+        id: projectId,
+        shortId: projectId,
+        mempelai: sanitizedUpdates.mempelai || currentProj?.mempelai || 'Mempelai',
+        tanggal: sanitizedUpdates.tanggal || currentProj?.tanggal || '23 November 2025',
+        status: sanitizedUpdates.status || currentProj?.status || 'Aktif',
+        kategori: sanitizedUpdates.kategori || currentProj?.kategori || 'pernikahan',
+        clientEmail: sanitizedUpdates.clientEmail || currentProj?.clientEmail || '',
+        config: sanitizedUpdates.config || currentProj?.config || defaultWeddingConfig,
+        dibuatPada: serverTimestamp(),
+        terakhirDiubah: serverTimestamp()
+      });
+      console.info(`Firestore document ${cleanDocId} upserted successfully.`);
+    }
+  } catch (err: any) {
+    console.error('Firestore save failed:', err);
+    throw err;
   }
 }
 
@@ -355,14 +435,19 @@ export async function deleteProject(projectId: string): Promise<void> {
   try {
     const q = query(collection(db, 'proyek_klien'));
     const snapshot = await getDocs(q);
-    snapshot.forEach(async (docSnap) => {
-      const shortId = 'MS-' + docSnap.id.substring(0, 7).toUpperCase();
-      if (shortId === projectId || docSnap.id === projectId) {
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const shortId = data.id || data.shortId || ('MS-' + docSnap.id.substring(0, 7).toUpperCase());
+      if (
+        shortId.toLowerCase() === projectId.toLowerCase() || 
+        docSnap.id.toLowerCase() === projectId.toLowerCase() ||
+        (data.id && data.id.toLowerCase() === projectId.toLowerCase())
+      ) {
         await deleteDoc(doc(db, 'proyek_klien', docSnap.id));
       }
-    });
+    }
   } catch (e) {
-    console.warn('Deleted from local storage:', e);
+    console.warn('Deleted from local storage, error deleting remote:', e);
   }
 }
 
