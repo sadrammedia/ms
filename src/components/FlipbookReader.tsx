@@ -23,6 +23,7 @@ import { WeddingProject, GuestbookEntry } from '../types/wedding';
 import { submitRsvpWish } from '../services/firebase';
 import { 
   BotanicalCorner, 
+  DynamicDivider,
   GoldFloralDivider, 
   ModernDivider, 
   BotanicalSwag,
@@ -127,7 +128,41 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
       case 'Alex Brush': return 'font-alex';
       case 'Playfair Display': return 'font-serif font-bold';
       case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond';
+      case 'Montserrat': return 'font-montserrat font-bold tracking-wider';
+      case 'Marcellus': return 'font-marcellus tracking-wide';
+      case 'Plus Jakarta Sans': return 'font-sans font-bold';
       default: return 'font-script';
+    }
+  };
+
+  const getSectionTitleFontClass = () => {
+    const font = config.tema?.fontJudulSection || config.tema?.fontJudul || 'Playfair Display';
+    switch (font) {
+      case 'Alex Brush': return 'font-alex';
+      case 'Great Vibes': return 'font-script';
+      case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond font-semibold';
+      case 'Montserrat': return 'font-montserrat font-bold tracking-wide uppercase';
+      case 'Marcellus': return 'font-marcellus tracking-wide';
+      case 'Plus Jakarta Sans': return 'font-sans font-bold';
+      case 'Playfair Display':
+      default: return 'font-serif font-semibold';
+    }
+  };
+
+  const getProfileNameFontClass = () => {
+    const font = config.tema?.fontNamaProfil || 'Playfair Display';
+    switch (font) {
+      case 'Alex Brush': return 'font-alex text-base';
+      case 'Great Vibes': return 'font-script text-lg';
+      case 'Cinzel': return 'font-cinzel tracking-wider';
+      case 'Cormorant Garamond': return 'font-garamond';
+      case 'Montserrat': return 'font-montserrat';
+      case 'Marcellus': return 'font-marcellus';
+      case 'Plus Jakarta Sans': return 'font-sans';
+      case 'Playfair Display':
+      default: return 'font-serif';
     }
   };
 
@@ -386,7 +421,11 @@ export const FlipbookReader: React.FC<FlipbookReaderProps> = ({
                   ) : isBirthday ? (
                     <BirthdayCrown className="mx-auto mb-2 text-rose-500" />
                   ) : (
-                    <GoldFloralDivider className="mx-auto mb-2" color={accentColor} />
+                    <DynamicDivider 
+                      gayaPemisah={config.ornamenConfig?.gayaPemisah} 
+                      color={accentColor} 
+                      className="mx-auto mb-2" 
+                    />
                   )}
 
                   <span className="text-[10px] tracking-[0.25em] font-sans uppercase text-slate-500 font-semibold">
