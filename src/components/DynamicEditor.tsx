@@ -1401,14 +1401,447 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-slate-600 font-medium mb-1">Subjudul / Pesan Pembuka Sampul</label>
-                  <textarea
-                    rows={2}
-                    value={formData.subJudulSampul}
-                    onChange={e => setFormData({ ...formData, subJudulSampul: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
-                  />
+                {/* ========================================================================= */}
+                {/* PENGATURAN TEKS KECIL & TIPOGRAFI SAMPUL (SESUAI TANDA MERAH USER)        */}
+                {/* ========================================================================= */}
+                <div className="p-4 bg-gradient-to-br from-amber-50/90 to-amber-100/50 border border-amber-300/80 rounded-2xl space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">✍️</span>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-xs">
+                          Teks Pengantar Sampul (Tanda Kurung Merah Tengah)
+                        </h4>
+                        <p className="text-[10px] text-slate-600">
+                          Ubah kata-kata, ukuran font, warna, tebal (bold), miring, dan efek bayangan
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-amber-950 bg-amber-200 px-2 py-0.5 rounded-full font-bold">
+                      Tanda Merah
+                    </span>
+                  </div>
+
+                  {/* Textarea input */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Isi Kalimat Pengantar:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.subJudulSampul}
+                      onChange={e => setFormData({ ...formData, subJudulSampul: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-white text-xs font-serif leading-relaxed focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                      placeholder="Dengan segala kerendahan hati, kami mengundang Bapak/Ibu/Saudara/i..."
+                    />
+                  </div>
+
+                  {/* 1. Pengaturan Warna Teks Pengantar */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="block text-[11px] font-semibold text-slate-700">
+                      Warna Teks Pengantar:
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[
+                        { label: 'Gelap (Default)', color: '#334155' },
+                        { label: 'Putih Terang', color: '#FFFFFF' },
+                        { label: 'Emas Mewah', color: '#C5A059' },
+                        { label: 'Hitam Pekat', color: '#0F172A' },
+                        { label: 'Burgundy', color: '#7D3C4D' },
+                        { label: 'Navy', color: '#0E3B68' },
+                        { label: 'Warna Tema', color: formData.tema.warnaUtama },
+                      ].map((c, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            tataLetak: {
+                              ...prev.tataLetak,
+                              gayaTeksSampul: {
+                                ...prev.tataLetak?.gayaTeksSampul,
+                                subJudulWarna: c.color
+                              }
+                            }
+                          }))}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                            (formData.tataLetak?.gayaTeksSampul?.subJudulWarna || '#334155') === c.color
+                              ? 'border-amber-600 ring-2 ring-amber-400 bg-white font-bold text-slate-900 shadow-2xs'
+                              : 'border-slate-200 bg-white/80 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span 
+                            className="w-3 h-3 rounded-full border border-slate-300 shrink-0" 
+                            style={{ backgroundColor: c.color }} 
+                          />
+                          <span>{c.label}</span>
+                        </button>
+                      ))}
+
+                      {/* Custom Color Input */}
+                      <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                        <input
+                          type="color"
+                          value={formData.tataLetak?.gayaTeksSampul?.subJudulWarna || '#334155'}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              tataLetak: {
+                                ...prev.tataLetak,
+                                gayaTeksSampul: {
+                                  ...prev.tataLetak?.gayaTeksSampul,
+                                  subJudulWarna: val
+                                }
+                              }
+                            }));
+                          }}
+                          className="w-5 h-5 rounded cursor-pointer border-0 p-0"
+                          title="Pilih warna kustom teks pengantar"
+                        />
+                        <span className="text-[10px] font-mono uppercase text-slate-600">
+                          {formData.tataLetak?.gayaTeksSampul?.subJudulWarna || '#334155'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Ukuran Font Teks Pengantar */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="block text-[11px] font-semibold text-slate-700">
+                      Ukuran Teks Pengantar:
+                    </label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[
+                        { id: 'xs', label: 'Ekstra Kecil', sub: '11px' },
+                        { id: 'sm', label: 'Kecil', sub: '13px' },
+                        { id: 'base', label: 'Sedang (Ideal)', sub: '15px' },
+                        { id: 'lg', label: 'Besar', sub: '18px' },
+                        { id: 'xl', label: 'Ekstra Besar', sub: '20px' },
+                      ].map(sz => (
+                        <button
+                          key={sz.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            tataLetak: {
+                              ...prev.tataLetak,
+                              gayaTeksSampul: {
+                                ...prev.tataLetak?.gayaTeksSampul,
+                                subJudulUkuran: sz.id as any
+                              }
+                            }
+                          }))}
+                          className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                            (formData.tataLetak?.gayaTeksSampul?.subJudulUkuran || 'sm') === sz.id
+                              ? 'border-amber-600 ring-2 ring-amber-400 bg-white font-bold text-slate-900 shadow-2xs'
+                              : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span className="block text-[10px] font-medium">{sz.label}</span>
+                          <span className="block text-[8px] opacity-60">{sz.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3. Format: Bold, Italic, & Text Shadow */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="block text-[11px] font-semibold text-slate-700">
+                      Gaya & Efek Teks:
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Bold Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              subJudulBold: !(prev.tataLetak?.gayaTeksSampul?.subJudulBold)
+                            }
+                          }
+                        }))}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          formData.tataLetak?.gayaTeksSampul?.subJudulBold
+                            ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>B</span>
+                        <span className="text-[10px] font-normal">Tebal (Bold)</span>
+                      </button>
+
+                      {/* Italic Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              subJudulItalic: !(prev.tataLetak?.gayaTeksSampul?.subJudulItalic)
+                            }
+                          }
+                        }))}
+                        className={`px-3 py-1.5 rounded-xl border text-xs italic font-serif transition-all cursor-pointer flex items-center gap-1.5 ${
+                          formData.tataLetak?.gayaTeksSampul?.subJudulItalic
+                            ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>I</span>
+                        <span className="text-[10px] not-italic font-normal">Miring (Italic)</span>
+                      </button>
+
+                      {/* Shadow Toggle (Crucial for background photos) */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              subJudulShadow: !(prev.tataLetak?.gayaTeksSampul?.subJudulShadow)
+                            }
+                          }
+                        }))}
+                        className={`px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                          formData.tataLetak?.gayaTeksSampul?.subJudulShadow
+                            ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                        title="Beri bayangan agar teks terbaca jelas di atas foto latar belakang"
+                      >
+                        <span>☁️</span>
+                        <span className="text-[10px]">Bayangan Kontras (Shadow)</span>
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 italic mt-0.5">
+                      💡 Aktifkan <strong>Bayangan Kontras</strong> jika foto latar belakang membuat teks sulit dibaca.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Pengaturan Tambahan: Nama Mempelai & Info Bawah (Tanda Merah Atas & Bawah) */}
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                      <span>🎨</span>
+                      <span>Format Nama Mempelai & Info Lokasi (Tanda Merah Atas & Bawah)</span>
+                    </h4>
+                    <span className="text-[10px] text-slate-500 font-medium">Opsional</span>
+                  </div>
+
+                  {/* 1. Nama Mempelai (Tanda Merah Atas) */}
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <span className="block text-[11px] font-bold text-slate-800">1. Nama Mempelai / Judul Utama (Tanda Merah Atas)</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Warna Nama Mempelai</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="color"
+                            value={formData.tataLetak?.gayaTeksSampul?.judulWarna || formData.tema.warnaUtama}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  gayaTeksSampul: {
+                                    ...prev.tataLetak?.gayaTeksSampul,
+                                    judulWarna: val
+                                  }
+                                }
+                              }));
+                            }}
+                            className="w-7 h-7 rounded cursor-pointer border border-slate-200 p-0"
+                          />
+                          <span className="text-[10px] font-mono uppercase text-slate-600">
+                            {formData.tataLetak?.gayaTeksSampul?.judulWarna || formData.tema.warnaUtama}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Ukuran Huruf</label>
+                        <select
+                          value={formData.tataLetak?.gayaTeksSampul?.judulUkuran || 'lg'}
+                          onChange={e => {
+                            const val = e.target.value as any;
+                            setFormData(prev => ({
+                              ...prev,
+                              tataLetak: {
+                                ...prev.tataLetak,
+                                gayaTeksSampul: {
+                                  ...prev.tataLetak?.gayaTeksSampul,
+                                  judulUkuran: val
+                                }
+                              }
+                            }));
+                          }}
+                          className="w-full px-2 py-1 rounded-lg border border-slate-200 text-xs bg-white"
+                        >
+                          <option value="sm">Sedang (3xl - 4xl)</option>
+                          <option value="md">Besar (4xl - 5xl)</option>
+                          <option value="lg">Sangat Besar (5xl - 6xl Default)</option>
+                          <option value="xl">Ekstra Showcase (6xl - 7xl)</option>
+                          <option value="2xl">Super Monumental (7xl - 8xl)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              judulBold: !(prev.tataLetak?.gayaTeksSampul?.judulBold)
+                            }
+                          }
+                        }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer ${
+                          formData.tataLetak?.gayaTeksSampul?.judulBold
+                            ? 'bg-[#1F362D] text-white border-[#1F362D]'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        B (Tebal)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              judulShadow: !(prev.tataLetak?.gayaTeksSampul?.judulShadow)
+                            }
+                          }
+                        }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                          formData.tataLetak?.gayaTeksSampul?.judulShadow
+                            ? 'bg-[#1F362D] text-white border-[#1F362D]'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        ☁️ Bayangan Nama
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2. Info Tanggal & Tempat (Tanda Merah Bawah) */}
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <span className="block text-[11px] font-bold text-slate-800">2. Info Tanggal & Lokasi Acara (Tanda Merah Bawah)</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Warna Teks Lokasi/Tanggal</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="color"
+                            value={formData.tataLetak?.gayaTeksSampul?.infoWarna || '#334155'}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  gayaTeksSampul: {
+                                    ...prev.tataLetak?.gayaTeksSampul,
+                                    infoWarna: val
+                                  }
+                                }
+                              }));
+                            }}
+                            className="w-7 h-7 rounded cursor-pointer border border-slate-200 p-0"
+                          />
+                          <span className="text-[10px] font-mono uppercase text-slate-600">
+                            {formData.tataLetak?.gayaTeksSampul?.infoWarna || '#334155'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Ukuran Font</label>
+                        <select
+                          value={formData.tataLetak?.gayaTeksSampul?.infoUkuran || 'xs'}
+                          onChange={e => {
+                            const val = e.target.value as any;
+                            setFormData(prev => ({
+                              ...prev,
+                              tataLetak: {
+                                ...prev.tataLetak,
+                                gayaTeksSampul: {
+                                  ...prev.tataLetak?.gayaTeksSampul,
+                                  infoUkuran: val
+                                }
+                              }
+                            }));
+                          }}
+                          className="w-full px-2 py-1 rounded-lg border border-slate-200 text-xs bg-white"
+                        >
+                          <option value="xs">Kecil (11px)</option>
+                          <option value="sm">Sedang (13px)</option>
+                          <option value="base">Normal (15px)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              infoBold: !(prev.tataLetak?.gayaTeksSampul?.infoBold)
+                            }
+                          }
+                        }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer ${
+                          formData.tataLetak?.gayaTeksSampul?.infoBold
+                            ? 'bg-[#1F362D] text-white border-[#1F362D]'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        B (Tebal)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            gayaTeksSampul: {
+                              ...prev.tataLetak?.gayaTeksSampul,
+                              infoShadow: !(prev.tataLetak?.gayaTeksSampul?.infoShadow)
+                            }
+                          }
+                        }))}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                          formData.tataLetak?.gayaTeksSampul?.infoShadow
+                            ? 'bg-[#1F362D] text-white border-[#1F362D]'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        ☁️ Bayangan Info
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -2361,33 +2794,269 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                   </div>
                 </div>
 
-                {/* Font Kaligrafi Judul */}
-                <div>
-                  <h4 className="font-serif font-bold text-slate-900 mb-1">Pilihan Tipografi Judul</h4>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {[
-                      { id: 'Great Vibes', name: 'Great Vibes (Script)', sample: 'Raka & Sinta', class: 'font-script text-xl' },
-                      { id: 'Alex Brush', name: 'Alex Brush (Brush)', sample: 'Raka & Sinta', class: 'font-alex text-xl' },
-                      { id: 'Playfair Display', name: 'Playfair Serif', sample: 'Raka & Sinta', class: 'font-serif text-sm font-bold' },
-                      { id: 'Cinzel', name: 'Cinzel Roman', sample: 'RAKA & SINTA', class: 'font-cinzel text-xs font-bold' }
-                    ].map(f => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setFormData({
-                          ...formData,
-                          tema: { ...formData.tema, fontJudul: f.id }
-                        })}
-                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                          formData.tema.fontJudul === f.id
-                            ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white'
-                            : 'border-slate-200 bg-slate-50 hover:bg-white'
-                        }`}
-                      >
-                        <span className="text-[10px] text-slate-400 block mb-1">{f.name}</span>
-                        <span className={`${f.class} text-slate-800`}>{f.sample}</span>
-                      </button>
-                    ))}
+                {/* ========================================================================= */}
+                {/* KOLEKSI & PENGATURAN TIPOGRAFI / FONT (SESUAI GAMBAR LAMPIRAN)            */}
+                {/* ========================================================================= */}
+                <div className="pt-2 border-t border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-serif font-bold text-slate-900 text-sm">
+                        🔤 Koleksi & Pengaturan Tipografi / Font
+                      </h4>
+                      <p className="text-slate-500 text-[11px]">
+                        Atur gaya huruf judul, nama pengantin di profil, dan judul per-bagian
+                      </p>
+                    </div>
+                    <span className="text-[10px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-semibold">
+                      Tipografi
+                    </span>
+                  </div>
+
+                  {/* 1. Font Judul Bagian ("Tentang Kami", "Kisah Kami", dll. - Tanda Merah 1 & 3) */}
+                  <div className="p-3.5 bg-gradient-to-br from-indigo-50/70 to-slate-50 rounded-2xl border border-indigo-200/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-bold text-xs text-slate-900">
+                          1. Font Judul Bagian ("Tentang Kami", "Kisah Kami", dll.)
+                        </h5>
+                        <p className="text-[10px] text-slate-500">
+                          Sesuai tanda merah 1 & 3 pada gambar lampiran
+                        </p>
+                      </div>
+                      <span className="text-[9px] bg-indigo-200 text-indigo-900 px-1.5 py-0.5 rounded font-bold">
+                        Tanda 1 & 3
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'Playfair Display', name: 'Playfair Display', sample: 'Tentang Kami', class: 'font-serif' },
+                        { id: 'Cinzel', name: 'Cinzel Roman', sample: 'TENTANG KAMI', class: 'font-cinzel' },
+                        { id: 'Cormorant Garamond', name: 'Cormorant', sample: 'Tentang Kami', class: 'font-garamond' },
+                        { id: 'Marcellus', name: 'Marcellus', sample: 'Tentang Kami', class: 'font-marcellus' },
+                        { id: 'Great Vibes', name: 'Great Vibes', sample: 'Tentang Kami', class: 'font-script' },
+                        { id: 'Alex Brush', name: 'Alex Brush', sample: 'Tentang Kami', class: 'font-alex' },
+                        { id: 'Montserrat', name: 'Montserrat', sample: 'TENTANG KAMI', class: 'font-montserrat font-bold' },
+                        { id: 'Plus Jakarta Sans', name: 'Jakarta Sans', sample: 'Tentang Kami', class: 'font-sans font-bold' },
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            tema: { ...prev.tema, fontJudulSection: f.id }
+                          }))}
+                          className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                            (formData.tema.fontJudulSection || formData.tema.fontJudul || 'Playfair Display') === f.id
+                              ? 'border-indigo-600 ring-2 ring-indigo-400 bg-white shadow-2xs font-bold text-slate-900'
+                              : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span className="text-[9px] text-slate-400 block truncate">{f.name}</span>
+                          <span className={`${f.class} text-xs block truncate mt-0.5`}>{f.sample}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Ukuran Judul Bagian */}
+                    <div className="flex items-center justify-between pt-1 border-t border-indigo-100 text-[11px]">
+                      <span className="text-slate-600 font-medium">Ukuran Judul Bagian:</span>
+                      <div className="flex items-center gap-1.5">
+                        {[
+                          { id: 'sm', label: 'Sedang' },
+                          { id: 'lg', label: 'Besar (Standar)' },
+                          { id: 'xl', label: 'Ekstra Besar' },
+                        ].map(sz => (
+                          <button
+                            key={sz.id}
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              tema: { ...prev.tema, ukuranJudulSection: sz.id as any }
+                            }))}
+                            className={`px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                              (formData.tema.ukuranJudulSection || 'lg') === sz.id
+                                ? 'bg-indigo-600 text-white border-indigo-600 font-bold shadow-2xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {sz.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Font Nama Mempelai di Profil (Tanda Merah 2) */}
+                  <div className="p-3.5 bg-gradient-to-br from-rose-50/70 to-slate-50 rounded-2xl border border-rose-200/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="font-bold text-xs text-slate-900">
+                          2. Font & Gaya Nama Mempelai di Profil ("Mardas Lobel Atafat, ST" & "Sari Apriliani")
+                        </h5>
+                        <p className="text-[10px] text-slate-500">
+                          Sesuai tanda merah 2 pada gambar lampiran
+                        </p>
+                      </div>
+                      <span className="text-[9px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded font-bold">
+                        Tanda 2
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'Playfair Display', name: 'Playfair Serif', sample: 'Mardas Lobel', class: 'font-serif' },
+                        { id: 'Cinzel', name: 'Cinzel Roman', sample: 'MARDAS LOBEL', class: 'font-cinzel' },
+                        { id: 'Cormorant Garamond', name: 'Cormorant Garamond', sample: 'Mardas Lobel', class: 'font-garamond' },
+                        { id: 'Marcellus', name: 'Marcellus', sample: 'Mardas Lobel', class: 'font-marcellus' },
+                        { id: 'Great Vibes', name: 'Great Vibes Script', sample: 'Mardas Lobel', class: 'font-script text-base' },
+                        { id: 'Alex Brush', name: 'Alex Brush', sample: 'Mardas Lobel', class: 'font-alex text-sm' },
+                        { id: 'Montserrat', name: 'Montserrat Sans', sample: 'Mardas Lobel', class: 'font-montserrat' },
+                        { id: 'Plus Jakarta Sans', name: 'Jakarta Sans', sample: 'Mardas Lobel', class: 'font-sans' },
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            tema: { ...prev.tema, fontNamaProfil: f.id }
+                          }))}
+                          className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                            (formData.tema.fontNamaProfil || 'Playfair Display') === f.id
+                              ? 'border-rose-600 ring-2 ring-rose-400 bg-white shadow-2xs font-bold text-slate-900'
+                              : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span className="text-[9px] text-slate-400 block truncate">{f.name}</span>
+                          <span className={`${f.class} text-xs block truncate mt-0.5`}>{f.sample}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Ukuran, Format & Warna Nama di Profil */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 border-t border-rose-100">
+                      {/* Ukuran */}
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Ukuran Nama:</label>
+                        <div className="grid grid-cols-4 gap-1">
+                          {[
+                            { id: 'sm', label: 'Kecil' },
+                            { id: 'md', label: 'Sedang' },
+                            { id: 'lg', label: 'Besar' },
+                            { id: 'xl', label: 'Ekstra' },
+                          ].map(sz => (
+                            <button
+                              key={sz.id}
+                              type="button"
+                              onClick={() => setFormData(prev => ({
+                                ...prev,
+                                tema: { ...prev.tema, ukuranNamaProfil: sz.id as any }
+                              }))}
+                              className={`py-1 text-[9px] rounded-lg border text-center transition-all cursor-pointer ${
+                                (formData.tema.ukuranNamaProfil || 'md') === sz.id
+                                  ? 'bg-rose-600 text-white border-rose-600 font-bold'
+                                  : 'bg-white text-slate-700 border-slate-200'
+                              }`}
+                            >
+                              {sz.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Format: Tebal & Miring */}
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Format Huruf:</label>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              tema: { ...prev.tema, tebalNamaProfil: !(prev.tema.tebalNamaProfil ?? true) }
+                            }))}
+                            className={`flex-1 py-1 px-2 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                              (formData.tema.tebalNamaProfil ?? true)
+                                ? 'bg-rose-600 text-white border-rose-600'
+                                : 'bg-white text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            B (Tebal)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              tema: { ...prev.tema, miringNamaProfil: !(prev.tema.miringNamaProfil ?? false) }
+                            }))}
+                            className={`flex-1 py-1 px-2 rounded-lg border text-[10px] italic font-serif transition-all cursor-pointer ${
+                              formData.tema.miringNamaProfil
+                                ? 'bg-rose-600 text-white border-rose-600'
+                                : 'bg-white text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            I (Miring)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Warna Nama Mempelai */}
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1">Warna Nama:</label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="color"
+                            value={formData.tema.warnaNamaProfil || formData.tema.warnaUtama}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFormData(prev => ({
+                                ...prev,
+                                tema: { ...prev.tema, warnaNamaProfil: val }
+                              }));
+                            }}
+                            className="w-7 h-7 rounded cursor-pointer border border-slate-200 p-0"
+                          />
+                          <span className="text-[10px] font-mono uppercase text-slate-600">
+                            {formData.tema.warnaNamaProfil || formData.tema.warnaUtama}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Font Judul Utama / Sampul (The Wedding Of / Judul Pengantin) */}
+                  <div>
+                    <h5 className="font-bold text-xs text-slate-800 mb-1.5">
+                      3. Font Judul Utama Sampul (Hero Cover Title)
+                    </h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'Great Vibes', name: 'Great Vibes (Script)', sample: 'Raka & Sinta', class: 'font-script text-lg' },
+                        { id: 'Alex Brush', name: 'Alex Brush (Brush)', sample: 'Raka & Sinta', class: 'font-alex text-base' },
+                        { id: 'Playfair Display', name: 'Playfair Serif', sample: 'Raka & Sinta', class: 'font-serif text-xs font-bold' },
+                        { id: 'Cinzel', name: 'Cinzel Roman', sample: 'RAKA & SINTA', class: 'font-cinzel text-[11px] font-bold' },
+                        { id: 'Cormorant Garamond', name: 'Cormorant Garamond', sample: 'Raka & Sinta', class: 'font-garamond text-xs font-bold' },
+                        { id: 'Marcellus', name: 'Marcellus', sample: 'RAKA & SINTA', class: 'font-marcellus text-xs' },
+                        { id: 'Montserrat', name: 'Montserrat Bold', sample: 'RAKA & SINTA', class: 'font-montserrat text-xs font-bold' },
+                        { id: 'Plus Jakarta Sans', name: 'Jakarta Sans', sample: 'Raka & Sinta', class: 'font-sans text-xs font-bold' },
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setFormData({
+                            ...formData,
+                            tema: { ...formData.tema, fontJudul: f.id }
+                          })}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            formData.tema.fontJudul === f.id
+                              ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-2xs font-bold'
+                              : 'border-slate-200 bg-slate-50 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span className="text-[9px] text-slate-400 block mb-0.5 truncate">{f.name}</span>
+                          <span className={`${f.class} text-slate-800 block truncate`}>{f.sample}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -2441,8 +3110,9 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                       {[
                         { id: 'gold-filigree', label: '⚜️ Pita Emas Kerajaan', desc: 'Garis ukiran emas mengkilap' },
                         { id: 'leaf-vine', label: '🍃 Ranting Daun', desc: 'Lengkung dedaunan alami' },
-                        { id: 'clean-line', label: '➖ Garis Halus Modern', desc: 'Simpel dan minimalis' },
-                        { id: 'none', label: '— Tanpa Pembatas', desc: 'Hanya spasi kosong' },
+                        { id: 'clean-line', label: '➖ Garis Halus Modern', desc: 'Simpel dan minimalis geometris' },
+                        { id: 'bismillah-calligraphy', label: '🕌 Ornamen Islami', desc: 'Kubah & bulan sabit Syar\'i' },
+                        { id: 'none', label: '— Tanpa Pembatas', desc: 'Hanya spasi kosong bersih' },
                       ].map(div => (
                         <button
                           key={div.id}
