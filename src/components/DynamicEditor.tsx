@@ -20,11 +20,13 @@ import {
   ArrowLeft,
   Cake,
   Star,
-  BookOpen
+  BookOpen,
+  Loader2
 } from 'lucide-react';
 import { WeddingProject, WeddingConfig, LoveStoryItem, WeddingEvent, InvitationCategory } from '../types/wedding';
 import { updateProject } from '../services/firebase';
 import { InvitationView } from './InvitationView';
+import { compressImage, measureDataSize } from '../utils/imageCompressor';
 
 interface DynamicEditorProps {
   project: WeddingProject;
@@ -43,7 +45,7 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
     kategori: project.config.kategori || project.kategori || 'pernikahan'
   });
   const [projectMempelai, setProjectMempelai] = useState(project.mempelai);
-  const [projectTanggal, setProjectTanggal] = useState(project.tanggal);
+  const [projectTanggal, setProjectTanggal] = useState(formData.tanggalResmi || project.tanggal || '23 November 2025');
   const [projectStatus, setProjectStatus] = useState(project.status);
   
   // UI Tabs
@@ -51,31 +53,46 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
   const [isSaving, setIsSaving] = useState(false);
   const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
+  const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
 
   const isKhitan = formData.kategori === 'khitan';
   const isBirthday = formData.kategori === 'ulang-tahun';
   const isWedding = !isKhitan && !isBirthday;
 
-  // Helper to handle image uploads via File Input (converts to base64 data URL)
-  const handleFileUpload = (
+  // Helper to handle image uploads via File Input with automatic Canvas compression
+  // Prevents Firestore document > 1MB limits by resizing & optimizing photos to ~30KB - 75KB
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (base64Url: string) => void
+    onSuccess: (base64Url: string) => void,
+    compressOpts?: { maxWidth?: number; maxHeight?: number; maxSizeBytes?: number }
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran foto maksimal 5MB. Silakan pilih foto yang lebih ringan.');
-      return;
-    }
+    try {
+      setIsCompressingPhoto(true);
+      setCompressionStatus('Mengoptimalkan foto...');
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        onSuccess(event.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+      const compressed = await compressImage(file, {
+        maxWidth: compressOpts?.maxWidth || 1200,
+        maxHeight: compressOpts?.maxHeight || 1200,
+        quality: 0.72,
+        maxSizeBytes: compressOpts?.maxSizeBytes || 75 * 1024
+      });
+
+      const kb = Math.round(measureDataSize(compressed) / 1024);
+      setCompressionStatus(`Foto dioptimalkan (${kb} KB) ✓`);
+      setTimeout(() => setCompressionStatus(null), 3000);
+
+      onSuccess(compressed);
+    } catch (err) {
+      console.error('Gagal mengompres gambar:', err);
+      alert('Gagal memproses gambar. Silakan coba lagi dengan foto yang berbeda.');
+    } finally {
+      setIsCompressingPhoto(false);
+      e.target.value = '';
+    }
   };
 
   // Add gallery photo
@@ -127,7 +144,7 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
     }));
   };
 
-  // Save changes
+  // Save changes & publish
   const handleSave = async (statusOverride?: 'Aktif' | 'Draf') => {
     setIsSaving(true);
     const newStatus = statusOverride || projectStatus;
@@ -142,32 +159,50 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
       computedName = couple || projectMempelai;
     }
 
+    const currentTanggal = formData.tanggalResmi || projectTanggal;
+    const currentHariTanggal = formData.hariTanggalLengkap || currentTanggal;
+
+    // Synchronize dates to all agenda events so published cards never remain on old dates
+    const syncedAcaraList = formData.acaraList.map(item => ({
+      ...item,
+      hariTanggal: item.hariTanggal || currentHariTanggal
+    }));
+
+    const finalConfig: WeddingConfig = {
+      ...formData,
+      tanggalResmi: currentTanggal,
+      hariTanggalLengkap: currentHariTanggal,
+      acaraList: syncedAcaraList
+    };
+
     const updatedProject: WeddingProject = {
       ...project,
-      kategori: formData.kategori,
+      kategori: finalConfig.kategori,
       mempelai: computedName,
-      tanggal: formData.tanggalResmi || projectTanggal,
+      tanggal: currentTanggal,
       status: newStatus,
-      config: formData
+      config: finalConfig
     };
 
     try {
       await updateProject(project.id, {
-        kategori: formData.kategori,
+        kategori: finalConfig.kategori,
         mempelai: updatedProject.mempelai,
         tanggal: updatedProject.tanggal,
         status: newStatus,
-        config: formData
+        config: finalConfig
       });
 
+      setFormData(finalConfig);
       setProjectStatus(newStatus);
       setProjectMempelai(updatedProject.mempelai);
+      setProjectTanggal(currentTanggal);
       onSaveSuccess(updatedProject);
-      setSaveToast(`Undangan berhasil disimpan sebagai ${newStatus}!`);
-      setTimeout(() => setSaveToast(null), 3500);
-    } catch (err) {
-      console.error(err);
-      alert('Gagal menyimpan perubahan.');
+      setSaveToast(`Perubahan berhasil disimpan & dipublikasikan!`);
+      setTimeout(() => setSaveToast(null), 4000);
+    } catch (err: any) {
+      console.error('Save error in DynamicEditor:', err);
+      alert(`Gagal menyimpan perubahan: ${err.message || 'Koneksi bermasalah'}. Data tersimpan di memori lokal.`);
     } finally {
       setIsSaving(false);
     }
@@ -210,13 +245,21 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
           </div>
         </div>
 
-        {/* Save Toast notification */}
-        {saveToast && (
-          <div className="bg-emerald-600 text-white text-xs px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-fade-in font-medium">
-            <Check className="w-3.5 h-3.5" />
-            <span>{saveToast}</span>
-          </div>
-        )}
+        {/* Status Toast notifications */}
+        <div className="flex items-center gap-2">
+          {compressionStatus && (
+            <div className="bg-amber-600 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 font-medium animate-fade-in">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>{compressionStatus}</span>
+            </div>
+          )}
+          {saveToast && (
+            <div className="bg-emerald-600 text-white text-xs px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-fade-in font-medium">
+              <Check className="w-3.5 h-3.5" />
+              <span>{saveToast}</span>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
           {/* Device toggle for preview */}
@@ -867,17 +910,60 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                     <input
                       type="text"
                       value={formData.tanggalResmi}
-                      onChange={e => setFormData({ ...formData, tanggalResmi: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          tanggalResmi: val,
+                          hariTanggalLengkap: prev.hariTanggalLengkap || val,
+                          acaraList: prev.acaraList.map(a => ({
+                            ...a,
+                            hariTanggal: a.hariTanggal || val
+                          }))
+                        }));
+                        setProjectTanggal(val);
+                      }}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
                       placeholder="23 November 2025"
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 font-medium mb-1">Hari & Tanggal Lengkap</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-600 font-medium">Hari & Tanggal Lengkap</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const syncDate = formData.hariTanggalLengkap || formData.tanggalResmi;
+                          setFormData(prev => ({
+                            ...prev,
+                            acaraList: prev.acaraList.map(a => ({
+                              ...a,
+                              hariTanggal: syncDate
+                            }))
+                          }));
+                          setSaveToast('Tanggal disinkronkan ke seluruh agenda acara!');
+                          setTimeout(() => setSaveToast(null), 2500);
+                        }}
+                        className="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
+                        title="Klik untuk menyamakan tanggal ke semua kartu acara"
+                      >
+                        Sinkronkan ke Semua Acara
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={formData.hariTanggalLengkap}
-                      onChange={e => setFormData({ ...formData, hariTanggalLengkap: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          hariTanggalLengkap: val,
+                          acaraList: prev.acaraList.map(a => ({
+                            ...a,
+                            hariTanggal: val
+                          }))
+                        }));
+                      }}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
                       placeholder="Sabtu, 23 November 2025"
                     />
@@ -924,6 +1010,20 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                           className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 text-[10px]">Hari & Tanggal Acara Ini</label>
+                      <input
+                        type="text"
+                        value={acara.hariTanggal || formData.hariTanggalLengkap || formData.tanggalResmi}
+                        onChange={e => {
+                          const copy = [...formData.acaraList];
+                          copy[idx].hariTanggal = e.target.value;
+                          setFormData({ ...formData, acaraList: copy });
+                        }}
+                        placeholder="Sabtu, 23 November 2025"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium"
+                      />
                     </div>
                     <div>
                       <label className="block text-slate-500 text-[10px]">Nama Tempat / Gedung / Rumah</label>
@@ -976,18 +1076,39 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
             {activeTab === 'galeri' && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-serif font-bold text-slate-900">Daftar Foto Galeri ({formData.galeri.fotoList.length})</h4>
-                  <label className="px-3 py-1.5 rounded-xl bg-[#1F362D] text-white text-[11px] font-medium cursor-pointer flex items-center gap-1">
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Unggah Foto</span>
+                  <div>
+                    <h4 className="font-serif font-bold text-slate-900">Daftar Foto Galeri ({formData.galeri.fotoList.length})</h4>
+                    <p className="text-[10px] text-emerald-700 font-medium">⚡ Kompresi otomatis aktif (ringan & cepat dibuka)</p>
+                  </div>
+                  <label className={`px-3 py-1.5 rounded-xl bg-[#1F362D] hover:bg-[#162720] text-white text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors ${
+                    isCompressingPhoto ? 'opacity-60 pointer-events-none' : ''
+                  }`}>
+                    {isCompressingPhoto ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isCompressingPhoto ? 'Mengompres...' : 'Unggah Foto'}</span>
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={isCompressingPhoto}
                       className="hidden"
-                      onChange={e => handleFileUpload(e, url => handleAddGalleryPhoto(url))}
+                      onChange={e => handleFileUpload(e, url => handleAddGalleryPhoto(url), {
+                        maxWidth: 900,
+                        maxHeight: 900,
+                        maxSizeBytes: 50 * 1024
+                      })}
                     />
                   </label>
                 </div>
+
+                {formData.galeri.fotoList.length === 0 && (
+                  <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center text-slate-400">
+                    <p className="text-xs">Belum ada foto galeri.</p>
+                    <p className="text-[10px] mt-1 text-slate-400">Klik tombol "Unggah Foto" di atas untuk menambahkan momen bahagia.</p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   {formData.galeri.fotoList.map((foto, idx) => (
