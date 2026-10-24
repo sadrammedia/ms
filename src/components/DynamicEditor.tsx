@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Save, 
   Eye, 
@@ -21,12 +21,29 @@ import {
   Cake,
   Star,
   BookOpen,
-  Loader2
+  Loader2,
+  Video,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  FileAudio,
+  Disc,
+  Film
 } from 'lucide-react';
-import { WeddingProject, WeddingConfig, LoveStoryItem, WeddingEvent, InvitationCategory } from '../types/wedding';
+import { WeddingProject, WeddingConfig, LoveStoryItem, WeddingEvent, InvitationCategory, LayoutConfig, OrnamenConfig } from '../types/wedding';
 import { updateProject } from '../services/firebase';
 import { InvitationView } from './InvitationView';
 import { compressImage, measureDataSize } from '../utils/imageCompressor';
+import { 
+  FRAME_SHAPES, 
+  PHOTO_SIZES, 
+  BORDER_STYLES, 
+  COVER_BOX_POSITIONS, 
+  COVER_BOX_STYLES 
+} from '../utils/frameStyles';
+import { parseVideoUrl } from '../utils/videoHelper';
+import { AUDIO_PRESETS, readLocalAudioFile, AudioPreset } from '../utils/audioPresets';
 
 interface DynamicEditorProps {
   project: WeddingProject;
@@ -115,6 +132,70 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
         fotoList: prev.galeri.fotoList.filter((_, idx) => idx !== index)
       }
     }));
+  };
+
+  // Audio playback preview & upload states
+  const [playingPresetId, setPlayingPresetId] = useState<string | null>(null);
+  const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioUploadMessage, setAudioUploadMessage] = useState<string | null>(null);
+
+  const togglePlayAudioPreview = (url: string, id: string) => {
+    if (playingPresetId === id) {
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+      }
+      setPlayingPresetId(null);
+    } else {
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+      }
+      const audio = new Audio(url);
+      audioPreviewRef.current = audio;
+      audio.volume = formData.musik.volume ?? 0.7;
+      audio.play().then(() => {
+        setPlayingPresetId(id);
+      }).catch(err => {
+        console.warn('Playback prevented or file error:', err);
+      });
+      audio.onended = () => setPlayingPresetId(null);
+    }
+  };
+
+  const handleAudioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingAudio(true);
+      setAudioUploadMessage('Membaca file audio...');
+      const result = await readLocalAudioFile(file, 6 * 1024 * 1024);
+      if (!result.success || !result.dataUrl) {
+        alert(result.error || 'Gagal memproses file audio');
+        setAudioUploadMessage(null);
+        return;
+      }
+
+      const songTitle = file.name.replace(/\.[^/.]+$/, '');
+      setFormData(prev => ({
+        ...prev,
+        musik: {
+          ...prev.musik,
+          judulLagu: songTitle,
+          artis: 'Audio Kustom Pilihan',
+          audioUrl: result.dataUrl!,
+          isCustomUpload: true
+        }
+      }));
+      setAudioUploadMessage(`Audio berhasil dimuat: ${file.name} (${result.sizeFormatted}) ✓`);
+      setTimeout(() => setAudioUploadMessage(null), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat memuat file audio');
+    } finally {
+      setIsUploadingAudio(false);
+      e.target.value = '';
+    }
   };
 
   // Love Story handlers
@@ -419,13 +500,13 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
           {/* Tab Navigation */}
           <div className="flex overflow-x-auto border-b border-slate-100 bg-slate-50/70 p-2 gap-1 custom-scrollbar shrink-0">
             {[
-              { id: 'mempelai', label: isKhitan ? 'Profil Ananda' : isBirthday ? 'Profil Ultah' : 'Mempelai', icon: isBirthday ? Cake : isKhitan ? Star : Heart },
-              { id: 'teks', label: 'Sampul & Teks', icon: FileText },
+              { id: 'mempelai', label: isKhitan ? 'Profil Ananda' : isBirthday ? 'Profil Ultah' : 'Mempelai & Frame', icon: isBirthday ? Cake : isKhitan ? Star : Heart },
+              { id: 'teks', label: 'Sampul & Posisi', icon: FileText },
               { id: 'acara', label: 'Acara & Peta', icon: Calendar },
-              { id: 'galeri', label: 'Galeri Foto', icon: ImageIcon },
+              { id: 'galeri', label: 'Galeri & Video', icon: ImageIcon },
               ...(isWedding ? [{ id: 'cerita', label: 'Kisah Cinta', icon: Sparkles }] : []),
               { id: 'toggles', label: 'Bagian Aktif', icon: Sliders },
-              { id: 'tema', label: 'Tema & Desain', icon: Sliders },
+              { id: 'tema', label: 'Tema & Ornamen', icon: Sliders },
               { id: 'musik', label: 'Musik Latar', icon: Music },
             ].map(tab => {
               const Icon = tab.icon;
@@ -680,6 +761,257 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                 ) : (
                   /* WEDDING PROFILE INPUTS (Groom & Bride) */
                   <>
+                    {/* ========================================================================= */}
+                    {/* PENGATURAN BENTUK FRAME & GAYA FOTO MEMPELAI (COLLAGE EDITOR)            */}
+                    {/* ========================================================================= */}
+                    <div className="p-4 bg-gradient-to-br from-amber-50/80 via-stone-50 to-emerald-50/40 rounded-2xl border border-amber-200/90 shadow-2xs space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-serif font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-amber-700" />
+                            <span>Bentuk Frame & Desain Foto Mempelai (Collage Editor)</span>
+                          </h4>
+                          <p className="text-slate-500 text-[11px] mt-0.5">
+                            Kustomisasi bentuk bingkai, ukuran besar/kecil, dan border emas elegan layaknya editor kolase foto
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 1. Bentuk Frame Pembungkus */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 mb-2">
+                          1. Bentuk Frame Pembungkus Foto
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {FRAME_SHAPES.map(shp => {
+                            const isSelected = (formData.tataLetak?.bentukFrameFoto || 'circle') === shp.id;
+                            return (
+                              <button
+                                key={shp.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    tataLetak: {
+                                      ...prev.tataLetak,
+                                      bentukFrameFoto: shp.id
+                                    }
+                                  }));
+                                }}
+                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                                  isSelected
+                                    ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs'
+                                    : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                                }`}
+                              >
+                                <div className="w-full flex items-center justify-between mb-2">
+                                  <span className={`text-xs font-semibold ${isSelected ? 'text-[#1F362D]' : 'text-slate-800'}`}>
+                                    {shp.label}
+                                  </span>
+                                  <div 
+                                    className={`w-6 h-6 border-2 transition-all shrink-0 ${
+                                      isSelected ? 'border-amber-600 bg-amber-50' : 'border-slate-400 bg-slate-100'
+                                    }`}
+                                    style={{
+                                      borderRadius: 
+                                        shp.id === 'circle' ? '9999px' : 
+                                        shp.id === 'arch' || shp.id === 'arch-double' ? '12px 12px 3px 3px' :
+                                        shp.id === 'squircle' ? '6px' :
+                                        shp.id === 'oval' ? '50% / 60%' :
+                                        shp.id === 'scallop' ? '36% 64% 60% 40% / 40% 45% 55% 60%' :
+                                        shp.id === 'polaroid' ? '2px' :
+                                        shp.id === 'blob' ? '60% 40% 30% 70% / 60% 30% 70% 40%' : '4px',
+                                      clipPath: 
+                                        shp.id === 'diamond' ? 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' :
+                                        shp.id === 'hexagon' ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' : undefined
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-slate-500 leading-tight block">
+                                  {shp.desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Ukuran Foto Mempelai */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[11px] font-semibold text-slate-700">
+                            2. Ukuran Dimensi Foto
+                          </label>
+                          <span className="text-[10px] font-mono text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md font-bold">
+                            {formData.tataLetak?.ukuranFotoKustom || 130}px
+                          </span>
+                        </div>
+
+                        {/* Preset Buttons */}
+                        <div className="grid grid-cols-4 gap-2 mb-2.5">
+                          {PHOTO_SIZES.filter(s => s.id !== 'custom').map(s => {
+                            const isSelected = (formData.tataLetak?.ukuranFotoMempelai || 'md') === s.id;
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    tataLetak: {
+                                      ...prev.tataLetak,
+                                      ukuranFotoMempelai: s.id as any,
+                                      ukuranFotoKustom: s.px
+                                    }
+                                  }));
+                                }}
+                                className={`py-2 px-1 text-center rounded-xl border text-xs transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white font-bold text-[#1F362D] shadow-xs'
+                                    : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                                }`}
+                              >
+                                <span className="block">{s.label}</span>
+                                <span className="text-[9px] text-slate-400 font-normal">{s.px}px</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Continuous Slider */}
+                        <div className="bg-white p-2.5 rounded-xl border border-amber-100">
+                          <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>Kecil (90px)</span>
+                            <span className="font-semibold text-slate-700">Slider Ukuran Bebas</span>
+                            <span>Ekstra Besar (220px)</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={90}
+                            max={220}
+                            step={5}
+                            value={formData.tataLetak?.ukuranFotoKustom || 130}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10);
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  ukuranFotoMempelai: 'custom',
+                                  ukuranFotoKustom: val
+                                }
+                              }));
+                            }}
+                            className="w-full accent-[#1F362D] cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 3. Gaya Border / Bingkai Emas */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">
+                          3. Gaya Border / Ring Emas
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {BORDER_STYLES.map(b => {
+                            const isSelected = (formData.tataLetak?.gayaBorderFoto || 'gold-ring') === b.id;
+                            return (
+                              <button
+                                key={b.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    tataLetak: {
+                                      ...prev.tataLetak,
+                                      gayaBorderFoto: b.id as any
+                                    }
+                                  }));
+                                }}
+                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs font-semibold'
+                                    : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                                }`}
+                              >
+                                <span className="block text-xs text-slate-900">{b.label}</span>
+                                <span className="text-[10px] text-slate-500 font-normal leading-tight block">{b.desc}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 4. Posisi Fokus Wajah & Geser Vertikal Foto */}
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Fokus Pemotongan Foto
+                          </label>
+                          <div className="grid grid-cols-3 gap-1">
+                            {[
+                              { id: 'top', label: 'Wajah (Atas)' },
+                              { id: 'center', label: 'Tengah' },
+                              { id: 'bottom', label: 'Bawah' },
+                            ].map(f => {
+                              const isSelected = (formData.tataLetak?.posisiFokusFoto || 'top') === f.id;
+                              return (
+                                <button
+                                  key={f.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      tataLetak: {
+                                        ...prev.tataLetak,
+                                        posisiFokusFoto: f.id as any
+                                      }
+                                    }));
+                                  }}
+                                  className={`py-1.5 px-1 rounded-lg border text-[10px] text-center transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'border-[#1F362D] bg-[#1F362D] text-white font-bold'
+                                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  {f.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700">
+                              Geser Posisi Vertikal Y
+                            </label>
+                            <span className="text-[10px] font-mono text-slate-500">
+                              {formData.tataLetak?.geserVertikalFoto || 0}px
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={-30}
+                            max={30}
+                            step={2}
+                            value={formData.tataLetak?.geserVertikalFoto || 0}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10);
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  geserVertikalFoto: val
+                                }
+                              }));
+                            }}
+                            className="w-full accent-[#1F362D] cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
                       <h3 className="font-serif font-bold text-sm text-slate-900 mb-1">Profil Mempelai Pria</h3>
                       <p className="text-slate-500 text-[11px] mb-3">Informasi lengkap calon mempelai pria</p>
@@ -889,6 +1221,142 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
             {/* TAB: SAMPUL & TEKS */}
             {activeTab === 'teks' && (
               <div className="space-y-4">
+                {/* ========================================================================= */}
+                {/* KONTROL POSISI KOTAK SAMBUTAN & TOMBOL SAMPUL                              */}
+                {/* ========================================================================= */}
+                <div className="p-4 bg-gradient-to-br from-amber-50/80 to-stone-50 rounded-2xl border border-amber-200/90 shadow-2xs space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-serif font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <Sliders className="w-3.5 h-3.5 text-amber-700" />
+                        <span>Pengaturan Posisi Kotak Salam & Tombol Sampul</span>
+                      </h4>
+                      <p className="text-slate-500 text-[10px]">
+                        Geser posisi kotak tamu dan tombol agar tidak menutupi wajah mempelai pada foto latar belakang
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Pilihan Preset Posisi */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">Preset Penempatan Cepat</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {COVER_BOX_POSITIONS.map(pos => {
+                        const isSelected = (formData.tataLetak?.posisiKotakSampul || 'bawah') === pos.id;
+                        return (
+                          <button
+                            key={pos.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  posisiKotakSampul: pos.id as any
+                                }
+                              }));
+                            }}
+                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs font-semibold'
+                                : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                            }`}
+                          >
+                            <span className="block text-xs text-slate-900">{pos.label}</span>
+                            <span className="text-[10px] text-slate-500 font-normal leading-tight block">{pos.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Slider Fine-tuning Geser Vertikal */}
+                  <div className="bg-white p-3 rounded-xl border border-amber-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                        <span>Geser Presisi (Naik / Turun)</span>
+                        <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-mono font-bold">
+                          {formData.tataLetak?.geserVertikalKotakSampul || 0}px
+                        </span>
+                      </label>
+                      {(formData.tataLetak?.geserVertikalKotakSampul || 0) !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              tataLetak: {
+                                ...prev.tataLetak,
+                                geserVertikalKotakSampul: 0
+                              }
+                            }));
+                          }}
+                          className="text-[10px] text-amber-700 hover:underline font-semibold cursor-pointer"
+                        >
+                          Reset ke 0px
+                        </button>
+                      )}
+                    </div>
+
+                    <input
+                      type="range"
+                      min={-150}
+                      max={150}
+                      step={5}
+                      value={formData.tataLetak?.geserVertikalKotakSampul || 0}
+                      onChange={e => {
+                        const val = parseInt(e.target.value, 10);
+                        setFormData(prev => ({
+                          ...prev,
+                          tataLetak: {
+                            ...prev.tataLetak,
+                            geserVertikalKotakSampul: val
+                          }
+                        }));
+                      }}
+                      className="w-full accent-[#1F362D] cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-slate-400">
+                      <span>▲ Geser Naik (-150px)</span>
+                      <span>Tengah (0px)</span>
+                      <span>▼ Geser Turun (+150px)</span>
+                    </div>
+                  </div>
+
+                  {/* Gaya Tampilan Kartu Salam */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">Gaya Kartu Nama Tamu</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {COVER_BOX_STYLES.map(style => {
+                        const isSelected = (formData.tataLetak?.gayaKotakSampul || 'frosted-glass') === style.id;
+                        return (
+                          <button
+                            key={style.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                tataLetak: {
+                                  ...prev.tataLetak,
+                                  gayaKotakSampul: style.id as any
+                                }
+                              }));
+                            }}
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-xs font-semibold'
+                                : 'border-slate-200 bg-white/70 hover:bg-white text-slate-700'
+                            }`}
+                          >
+                            <span className="block text-xs text-slate-900">{style.label}</span>
+                            <span className="text-[9px] text-slate-500 font-normal leading-tight block">{style.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-slate-600 font-medium mb-1">Label Sampul</label>
                   <input
@@ -1301,58 +1769,204 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
               </div>
             )}
 
-            {/* TAB: GALERI FOTO */}
+            {/* TAB: GALERI FOTO & VIDEO */}
             {activeTab === 'galeri' && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-serif font-bold text-slate-900">Daftar Foto Galeri ({formData.galeri.fotoList.length})</h4>
-                    <p className="text-[10px] text-emerald-700 font-medium">⚡ Kompresi otomatis aktif (ringan & cepat dibuka)</p>
-                  </div>
-                  <label className={`px-3 py-1.5 rounded-xl bg-[#1F362D] hover:bg-[#162720] text-white text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors ${
-                    isCompressingPhoto ? 'opacity-60 pointer-events-none' : ''
-                  }`}>
-                    {isCompressingPhoto ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Plus className="w-3.5 h-3.5" />
-                    )}
-                    <span>{isCompressingPhoto ? 'Mengompres...' : 'Unggah Foto'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={isCompressingPhoto}
-                      className="hidden"
-                      onChange={e => handleFileUpload(e, url => handleAddGalleryPhoto(url), {
-                        maxWidth: 900,
-                        maxHeight: 900,
-                        maxSizeBytes: 50 * 1024
-                      })}
-                    />
-                  </label>
-                </div>
-
-                {formData.galeri.fotoList.length === 0 && (
-                  <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center text-slate-400">
-                    <p className="text-xs">Belum ada foto galeri.</p>
-                    <p className="text-[10px] mt-1 text-slate-400">Klik tombol "Unggah Foto" di atas untuk menambahkan momen bahagia.</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  {formData.galeri.fotoList.map((foto, idx) => (
-                    <div key={idx} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200 bg-slate-100">
-                      <img src={foto} alt={`Galeri ${idx + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => handleRemoveGalleryPhoto(idx)}
-                        className="absolute top-2 right-2 p-1.5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        title="Hapus Foto"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+              <div className="space-y-6">
+                
+                {/* 1. SEKSI VIDEO TEASER / SINEMATIK */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#1F362D] text-white flex items-center justify-center">
+                        <Video className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-slate-900 text-xs sm:text-sm">Video Momen / Teaser Sinematik</h4>
+                        <p className="text-[10px] text-slate-500">Mendukung YouTube (reguler & shorts), Vimeo, atau link MP4</p>
+                      </div>
                     </div>
-                  ))}
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        galeri: {
+                          ...prev.galeri,
+                          videoEnabled: !prev.galeri.videoEnabled
+                        }
+                      }))}
+                      className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                        formData.galeri.videoEnabled ? 'bg-[#1F362D]' : 'bg-slate-300'
+                      }`}
+                    >
+                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        formData.galeri.videoEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </button>
+                  </div>
+
+                  {formData.galeri.videoEnabled ? (
+                    <div className="space-y-3 pt-2 border-t border-slate-200">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-slate-700 font-medium text-xs">Tautan / Link Video</label>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-slate-400">Contoh Cepat:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  galeri: {
+                                    ...prev.galeri,
+                                    videoUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+                                    videoJudul: isWedding ? 'Teaser Prewedding Sinematik' : isKhitan ? 'Video Momen Kebahagiaan Ananda' : 'Video Pesta Ulang Tahun',
+                                    videoDeskripsi: 'Sekilas kilas balik kenangan manis perjalanan indah kami.'
+                                  }
+                                }));
+                                setSaveToast('Contoh video berhasil dimuat!');
+                                setTimeout(() => setSaveToast(null), 2500);
+                              }}
+                              className="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
+                            >
+                              Isi Contoh Video Demo
+                            </button>
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={formData.galeri.videoUrl || ''}
+                          onChange={e => setFormData(prev => ({
+                            ...prev,
+                            galeri: { ...prev.galeri, videoUrl: e.target.value }
+                          }))}
+                          placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/... atau .mp4"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          💡 Salin tautan langsung dari YouTube (termasuk YouTube Shorts), Vimeo, atau URL video MP4.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-slate-600 font-medium text-[11px] mb-1">Judul Video</label>
+                          <input
+                            type="text"
+                            value={formData.galeri.videoJudul || ''}
+                            onChange={e => setFormData(prev => ({
+                              ...prev,
+                              galeri: { ...prev.galeri, videoJudul: e.target.value }
+                            }))}
+                            placeholder="Teaser Prewedding Sinematik"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-600 font-medium text-[11px] mb-1">Keterangan Singkat</label>
+                          <input
+                            type="text"
+                            value={formData.galeri.videoDeskripsi || ''}
+                            onChange={e => setFormData(prev => ({
+                              ...prev,
+                              galeri: { ...prev.galeri, videoDeskripsi: e.target.value }
+                            }))}
+                            placeholder="Momen berharga bersama orang tercinta"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Video Player Preview in Editor */}
+                      {formData.galeri.videoUrl && (() => {
+                        const parsed = parseVideoUrl(formData.galeri.videoUrl);
+                        if (!parsed.isValid) {
+                          return (
+                            <p className="text-[10px] text-amber-600 italic">
+                              ⚠️ Format tautan video belum dikenali. Pastikan memasukkan link YouTube atau MP4 yang valid.
+                            </p>
+                          );
+                        }
+                        return (
+                          <div className="pt-2">
+                            <span className="block text-[10px] font-semibold text-slate-500 mb-1">Pratinjau Video Pemutar:</span>
+                            <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-900 shadow-sm border border-slate-300">
+                              {parsed.type === 'direct' ? (
+                                <video src={parsed.embedUrl} controls className="w-full h-full object-contain" />
+                              ) : (
+                                <iframe
+                                  src={parsed.embedUrl}
+                                  title="Preview Video"
+                                  className="w-full h-full border-0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-slate-500 italic bg-white p-2.5 rounded-xl border border-dashed border-slate-200">
+                      Bagian video saat ini <strong>dinonaktifkan</strong>. Geser tombol switch di atas jika ingin menampilkan video prewedding atau teaser kenangan di undangan.
+                    </div>
+                  )}
                 </div>
+
+                {/* 2. DAFTAR FOTO GALERI */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-serif font-bold text-slate-900">Daftar Foto Galeri ({formData.galeri.fotoList.length})</h4>
+                      <p className="text-[10px] text-emerald-700 font-medium">⚡ Kompresi otomatis aktif (ringan & cepat dibuka)</p>
+                    </div>
+                    <label className={`px-3 py-1.5 rounded-xl bg-[#1F362D] hover:bg-[#162720] text-white text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors ${
+                      isCompressingPhoto ? 'opacity-60 pointer-events-none' : ''
+                    }`}>
+                      {isCompressingPhoto ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isCompressingPhoto ? 'Mengompres...' : 'Unggah Foto'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isCompressingPhoto}
+                        className="hidden"
+                        onChange={e => handleFileUpload(e, url => handleAddGalleryPhoto(url), {
+                          maxWidth: 900,
+                          maxHeight: 900,
+                          maxSizeBytes: 50 * 1024
+                        })}
+                      />
+                    </label>
+                  </div>
+
+                  {formData.galeri.fotoList.length === 0 && (
+                    <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center text-slate-400">
+                      <p className="text-xs">Belum ada foto galeri.</p>
+                      <p className="text-[10px] mt-1 text-slate-400">Klik tombol "Unggah Foto" di atas untuk menambahkan momen bahagia.</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {formData.galeri.fotoList.map((foto, idx) => (
+                      <div key={idx} className="relative group rounded-xl overflow-hidden aspect-square border border-slate-200 bg-slate-100">
+                        <img src={foto} alt={`Galeri ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => handleRemoveGalleryPhoto(idx)}
+                          className="absolute top-2 right-2 p-1.5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          title="Hapus Foto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
 
@@ -1442,6 +2056,7 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                 {[
                   ...(isWedding ? [{ key: 'kisah', label: 'Kisah Perjalanan Cinta', checked: formData.kisahCinta.enabled, toggle: () => setFormData({ ...formData, kisahCinta: { ...formData.kisahCinta, enabled: !formData.kisahCinta.enabled } }) }] : []),
                   { key: 'galeri', label: 'Galeri Foto & Momen', checked: formData.galeri.enabled, toggle: () => setFormData({ ...formData, galeri: { ...formData.galeri, enabled: !formData.galeri.enabled } }) },
+                  { key: 'video', label: 'Video Teaser / Sinematik', checked: !!formData.galeri.videoEnabled, toggle: () => setFormData({ ...formData, galeri: { ...formData.galeri, videoEnabled: !formData.galeri.videoEnabled } }) },
                   { key: 'rsvp', label: 'Formulir Konfirmasi Kehadiran (RSVP)', checked: formData.rsvp.enabled, toggle: () => setFormData({ ...formData, rsvp: { ...formData.rsvp, enabled: !formData.rsvp.enabled } }) },
                   { key: 'bukuTamu', label: 'Buku Tamu & Ucapan Doa', checked: formData.bukuTamu.enabled, toggle: () => setFormData({ ...formData, bukuTamu: { ...formData.bukuTamu, enabled: !formData.bukuTamu.enabled } }) },
                   { key: 'amplop', label: 'Amplop Digital / Rekening Kado', checked: formData.amplopDigital.enabled, toggle: () => setFormData({ ...formData, amplopDigital: { ...formData.amplopDigital, enabled: !formData.amplopDigital.enabled } }) },
@@ -1775,48 +2390,406 @@ export const DynamicEditor: React.FC<DynamicEditorProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* 5. Ornamen & Dekorasi Hiasan */}
+                <div className="pt-2 border-t border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-serif font-bold text-slate-900">Koleksi Ornamen & Dekorasi Sudut</h4>
+                      <p className="text-slate-500 text-[11px]">Hiasan sudut layar dan pemisah antar bagian</p>
+                    </div>
+                    <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Dekorasi</span>
+                  </div>
+
+                  {/* Gaya Ornamen Sudut */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">Gaya Ornamen Sudut (Corner Flourish)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'botanical-leaves', label: '🌿 Botanical Flora', desc: 'Dedaunan watercolor lembut' },
+                        { id: 'gold-vintage', label: '✨ Gold Filigree', desc: 'Sulur ukir emas klasik mewah' },
+                        { id: 'islamic-arabesque', label: '🕌 Islamic Arch & Lantern', desc: 'Kubah & lentera khas Islami' },
+                        { id: 'none', label: '— Polos Minimalis', desc: 'Tanpa ornamen sudut' },
+                      ].map(orn => (
+                        <button
+                          key={orn.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            ornamenConfig: {
+                              ...prev.ornamenConfig,
+                              gayaSudut: orn.id as any
+                            }
+                          }))}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            (formData.ornamenConfig?.gayaSudut || 'botanical-leaves') === orn.id
+                              ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-2xs font-semibold'
+                              : 'border-slate-200 bg-slate-50 hover:bg-white'
+                          }`}
+                        >
+                          <span className="text-xs text-slate-900 block">{orn.label}</span>
+                          <span className="text-[10px] text-slate-500 block leading-tight">{orn.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gaya Pemisah Section */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">Pemisah Antar-Bagian (Divider)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'gold-filigree', label: '⚜️ Pita Emas Kerajaan', desc: 'Garis ukiran emas mengkilap' },
+                        { id: 'leaf-vine', label: '🍃 Ranting Daun', desc: 'Lengkung dedaunan alami' },
+                        { id: 'clean-line', label: '➖ Garis Halus Modern', desc: 'Simpel dan minimalis' },
+                        { id: 'none', label: '— Tanpa Pembatas', desc: 'Hanya spasi kosong' },
+                      ].map(div => (
+                        <button
+                          key={div.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            ornamenConfig: {
+                              ...prev.ornamenConfig,
+                              gayaPemisah: div.id as any
+                            }
+                          }))}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            (formData.ornamenConfig?.gayaPemisah || 'gold-filigree') === div.id
+                              ? 'border-[#1F362D] ring-2 ring-[#1F362D]/20 bg-white shadow-2xs font-semibold'
+                              : 'border-slate-200 bg-slate-50 hover:bg-white'
+                          }`}
+                        >
+                          <span className="text-xs text-slate-900 block">{div.label}</span>
+                          <span className="text-[10px] text-slate-500 block leading-tight">{div.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ornamen Kustom Manual (Upload PNG Transparan) */}
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-800">Unggah Ornamen Kustom Sendiri (PNG Transparan)</label>
+                      <span className="text-[10px] text-slate-500 font-medium">Opsional</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Punya aset bunga atau ukiran emas dari Canva/Pinterest? Unggah file PNG transparan untuk dipasang sebagai dekorasi.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formData.ornamenConfig?.customOrnamenUrl || ''}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          ornamenConfig: {
+                            ...prev.ornamenConfig,
+                            customOrnamenUrl: e.target.value
+                          }
+                        }))}
+                        placeholder="https://... atau klik Unggah"
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px]"
+                      />
+                      <label className="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 cursor-pointer shrink-0 font-medium text-xs flex items-center gap-1">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Unggah</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/svg+xml"
+                          className="hidden"
+                          onChange={e => handleFileUpload(e, url => {
+                            setFormData(prev => ({
+                              ...prev,
+                              ornamenConfig: {
+                                ...prev.ornamenConfig,
+                                customOrnamenUrl: url
+                              }
+                            }));
+                          }, { maxWidth: 600, maxHeight: 600, maxSizeBytes: 40 * 1024 })}
+                        />
+                      </label>
+                      {formData.ornamenConfig?.customOrnamenUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            ornamenConfig: { ...prev.ornamenConfig, customOrnamenUrl: '' }
+                          }))}
+                          className="p-1.5 text-rose-500 hover:text-rose-700"
+                          title="Hapus ornamen kustom"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {formData.ornamenConfig?.customOrnamenUrl && (
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden">
+                          <img src={formData.ornamenConfig.customOrnamenUrl} alt="Ornamen" className="max-w-full max-h-full object-contain" />
+                        </div>
+                        <div className="text-[11px] text-emerald-700 font-medium">
+                          ✓ Ornamen kustom aktif dipasang di kartu undangan
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
 
-            {/* TAB: MUSIK */}
+            {/* TAB: MUSIK LATAR & AUDIO */}
             {activeTab === 'musik' && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-slate-600 font-medium mb-1">Judul Lagu</label>
-                  <input
-                    type="text"
-                    value={formData.musik.judulLagu}
-                    onChange={e => setFormData({
-                      ...formData,
-                      musik: { ...formData.musik, judulLagu: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
-                  />
+              <div className="space-y-5">
+                
+                {/* 1. KARTU STATUS BACKSOUND AKTIF & PLAYER KONTROL */}
+                <div className="p-4 bg-slate-900 text-white rounded-3xl shadow-md space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-[#DFBF7A]">
+                        <Disc className="w-5 h-5 animate-spin" style={{ animationDuration: '6s' }} />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] text-amber-300 uppercase tracking-widest font-semibold block">
+                          {formData.musik.isCustomUpload ? 'File Audio Kustom' : 'Musik Undangan Aktif'}
+                        </span>
+                        <h4 className="font-serif font-bold text-sm text-white truncate max-w-[240px]">
+                          {formData.musik.judulLagu || 'Belum Ada Lagu Dipilih'}
+                        </h4>
+                        <p className="text-[10px] text-slate-400 truncate">
+                          {formData.musik.artis || 'Tanpa Artis'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Test Play / Pause Button in Editor */}
+                    {formData.musik.audioUrl && (
+                      <button
+                        type="button"
+                        onClick={() => togglePlayAudioPreview(formData.musik.audioUrl, 'current-active')}
+                        className={`p-2.5 rounded-full transition-transform active:scale-95 cursor-pointer shadow-lg ${
+                          playingPresetId === 'current-active'
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-[#DFBF7A] text-slate-900 hover:brightness-110'
+                        }`}
+                        title={playingPresetId === 'current-active' ? 'Jeda Suara' : 'Dengarkan Suara Sekarang'}
+                      >
+                        {playingPresetId === 'current-active' ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4 fill-current ml-0.5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Autoplay & Volume Settings */}
+                  <div className="pt-2 border-t border-white/10 grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex items-center justify-between bg-white/5 p-2 rounded-xl">
+                      <span className="text-[11px] text-slate-300">Putar Otomatis</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          musik: { ...prev.musik, autoplay: !prev.musik.autoplay }
+                        }))}
+                        className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                          formData.musik.autoplay ? 'bg-emerald-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform ${
+                          formData.musik.autoplay ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-white/5 p-2 rounded-xl">
+                      <span className="text-[11px] text-slate-300">Status Audio</span>
+                      <span className="text-[10px] font-semibold text-emerald-400">
+                        {formData.musik.enabled ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-slate-600 font-medium mb-1">Artis</label>
-                  <input
-                    type="text"
-                    value={formData.musik.artis}
-                    onChange={e => setFormData({
-                      ...formData,
-                      musik: { ...formData.musik, artis: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"
-                  />
+
+                {/* Status toast for audio upload */}
+                {audioUploadMessage && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{audioUploadMessage}</span>
+                  </div>
+                )}
+
+                {/* 2. FASILITAS 1: UNGGAH FILE AUDIO DARI PERANGKAT (MP3/WAV/M4A) */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#1F362D] text-white flex items-center justify-center">
+                        <Upload className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-slate-900 text-xs sm:text-sm">Unggah Lagu Sendiri (MP3 / WAV / M4A)</h4>
+                        <p className="text-[10px] text-slate-500">Pilih file audio dari HP atau komputer Anda</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Fleksibel</span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Anda bisa mengunggah lagu favorit pengantin, lagu nasyid, atau rekaman suara sendiri secara langsung tanpa perlu upload ke server luar.
+                  </p>
+
+                  <div>
+                    <label className={`w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-[#1F362D]/40 bg-white hover:bg-slate-100/80 text-slate-800 font-medium text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                      isUploadingAudio ? 'opacity-60 pointer-events-none' : ''
+                    }`}>
+                      {isUploadingAudio ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-[#1F362D]" />
+                      ) : (
+                        <FileAudio className="w-4 h-4 text-[#1F362D]" />
+                      )}
+                      <span>{isUploadingAudio ? 'Memuat file audio...' : 'Pilih File Audio dari Perangkat (Maks 6 MB)'}</span>
+                      <input
+                        type="file"
+                        accept="audio/mp3,audio/mpeg,audio/wav,audio/aac,audio/m4a,audio/x-m4a,.mp3,.wav,.m4a"
+                        disabled={isUploadingAudio}
+                        className="hidden"
+                        onChange={handleAudioFileUpload}
+                      />
+                    </label>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-slate-600 font-medium mb-1">Tautan Audio (MP3 URL)</label>
-                  <input
-                    type="text"
-                    value={formData.musik.audioUrl}
-                    onChange={e => setFormData({
-                      ...formData,
-                      musik: { ...formData.musik, audioUrl: e.target.value }
+
+                {/* 3. FASILITAS 2: KATALOG MUSIK BAWAAN SIAP PAKAI (PRESET LIBRARY) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-serif font-bold text-slate-900">Katalog Musik Bawaan Siap Pakai</h4>
+                      <p className="text-[10px] text-slate-500">Koleksi lagu instrumental bebas royalti siap pakai 1-klik</p>
+                    </div>
+                    <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-medium">{AUDIO_PRESETS.length} Lagu</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {AUDIO_PRESETS.map((preset) => {
+                      const isSelected = formData.musik.audioUrl === preset.url;
+                      const isPlaying = playingPresetId === preset.id;
+                      return (
+                        <div
+                          key={preset.id}
+                          className={`p-3 rounded-2xl border transition-all ${
+                            isSelected
+                              ? 'bg-amber-50/60 border-amber-300 ring-2 ring-amber-400/20 shadow-xs'
+                              : 'bg-white border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => togglePlayAudioPreview(preset.url, preset.id)}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                                  isPlaying
+                                    ? 'bg-rose-500 text-white shadow-xs'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                }`}
+                                title={isPlaying ? 'Jeda preview' : 'Putar preview lagu'}
+                              >
+                                {isPlaying ? (
+                                  <Pause className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                                )}
+                              </button>
+
+                              <div className="min-w-0">
+                                <h5 className="font-serif font-bold text-xs text-slate-900 truncate">
+                                  {preset.judul}
+                                </h5>
+                                <p className="text-[10px] text-slate-500 truncate">
+                                  {preset.artis} · <span className="font-mono">{preset.durasi}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  musik: {
+                                    ...prev.musik,
+                                    judulLagu: preset.judul,
+                                    artis: preset.artis,
+                                    audioUrl: preset.url,
+                                    isCustomUpload: false
+                                  }
+                                }));
+                                setSaveToast(`Lagu dipilih: ${preset.judul}`);
+                                setTimeout(() => setSaveToast(null), 2500);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all cursor-pointer shrink-0 ${
+                                isSelected
+                                  ? 'bg-[#1F362D] text-white shadow-xs'
+                                  : 'bg-slate-100 hover:bg-[#1F362D] hover:text-white text-slate-700 border border-slate-200'
+                              }`}
+                            >
+                              {isSelected ? '✓ Terpilih' : 'Gunakan Lagu'}
+                            </button>
+                          </div>
+                        </div>
+                      );
                     })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-[11px]"
-                  />
+                  </div>
                 </div>
+
+                {/* 4. FASILITAS 3: TAUTAN MANUAL (URL STREAMING) */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                  <h4 className="font-serif font-bold text-slate-900 text-xs sm:text-sm">Pengaturan Manual Tautan Audio</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-slate-600 font-medium text-[11px] mb-1">Judul Lagu</label>
+                      <input
+                        type="text"
+                        value={formData.musik.judulLagu}
+                        onChange={e => setFormData({
+                          ...formData,
+                          musik: { ...formData.musik, judulLagu: e.target.value }
+                        })}
+                        placeholder="Cth: Janji Suci"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-medium text-[11px] mb-1">Nama Artis / Musisi</label>
+                      <input
+                        type="text"
+                        value={formData.musik.artis}
+                        onChange={e => setFormData({
+                          ...formData,
+                          musik: { ...formData.musik, artis: e.target.value }
+                        })}
+                        placeholder="Cth: Yovie & Nuno"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-medium text-[11px] mb-1">Tautan File Audio Langsung (URL MP3)</label>
+                    <input
+                      type="text"
+                      value={formData.musik.audioUrl}
+                      onChange={e => setFormData({
+                        ...formData,
+                        musik: { ...formData.musik, audioUrl: e.target.value, isCustomUpload: false }
+                      })}
+                      placeholder="https://.../lagu.mp3"
+                      className="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-mono"
+                    />
+                  </div>
+                </div>
+
               </div>
             )}
 
