@@ -167,9 +167,9 @@ export const defaultWeddingConfig: WeddingConfig = {
   musik: {
     enabled: true,
     autoplay: false,
-    judulLagu: 'A Thousand Years (Instrumental Acoustic)',
-    artis: 'The Piano Guys & Cello',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-wedding-acoustic-guitar-112191.mp3'
+    judulLagu: 'Beautiful Acoustic Wedding Promise',
+    artis: 'Acoustic Morning Melody',
+    audioUrl: '/audio/acoustic-wedding.mp3'
   },
   
   tema: {
@@ -345,9 +345,9 @@ export const defaultKhitanConfig: WeddingConfig = {
   musik: {
     enabled: true,
     autoplay: false,
-    judulLagu: 'Instrumental Sholawat Gambus Akustik',
-    artis: 'Nasheed Harmony',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c227bf38.mp3?filename=arabic-oriental-lounge-10777.mp3'
+    judulLagu: 'Kedamaian Hati (Syahdu Flute & Gambus)',
+    artis: 'ForestMusic (This Ramadan Instrumental)',
+    audioUrl: '/audio/syahdu-khitan.mp3'
   },
   
   tema: {
@@ -491,9 +491,9 @@ export const defaultBirthdayConfig: WeddingConfig = {
   musik: {
     enabled: true,
     autoplay: false,
-    judulLagu: 'Happy Celebration Fun Acoustic',
-    artis: 'Kids Joy Pop',
-    audioUrl: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792e3.mp3?filename=fun-happy-acoustic-123447.mp3'
+    judulLagu: 'Happy Celebration & Joyful Acoustic',
+    artis: 'Sunlit Children Celebration',
+    audioUrl: '/audio/happy-birthday.mp3'
   },
   
   tema: {
