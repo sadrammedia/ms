@@ -261,5 +261,42 @@ export async function sanitizeConfigForFirestore(config: any): Promise<any> {
     }
   }
 
-  return clone;
+  // 9. Protect Audio Payload from Exceeding Firestore 1MB Limits
+  // Large uploaded audio data URLs (> 350KB) must not crash Firestore's 1,048,576 bytes limit
+  if (clone.musik && typeof clone.musik.audioUrl === 'string' && clone.musik.audioUrl.startsWith('data:audio/')) {
+    const audioByteSize = measureDataSize(clone.musik.audioUrl);
+    if (audioByteSize > 350 * 1024) {
+      try {
+        const audioKey = `ms_uploaded_audio_${clone.slug || 'active'}`;
+        localStorage.setItem(audioKey, clone.musik.audioUrl);
+        // Replace with reference marker for Firestore cloud document
+        clone.musik.audioUrl = `local-cached://${audioKey}`;
+      } catch (e) {
+        console.warn('Could not cache large audio locally:', e);
+      }
+    }
+  }
+
+  // Strip all undefined properties recursively to prevent "invalid nested entity" in Firestore
+  return removeUndefinedDeep(clone);
+}
+
+/**
+ * Recursively cleans any `undefined` values and ensures plain JSON primitives.
+ * Firestore strictly rejects documents with `undefined` values in nested entities.
+ */
+export function removeUndefinedDeep(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefinedDeep(item)).filter(item => item !== undefined);
+  }
+  const cleaned: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (val !== undefined) {
+      cleaned[key] = removeUndefinedDeep(val);
+    }
+  }
+  return cleaned;
 }
